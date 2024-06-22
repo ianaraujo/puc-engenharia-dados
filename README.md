@@ -2,7 +2,7 @@
 
 [![License: CC BY-NC](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
-Trabalho de conclusão do módulo de Engenharia de Dados do curso de Pós-graduação em Ciência de Dados e Analytics da PUC-Rio.
+Trabalho de conclusão do módulo de Engenharia de Dados do curso de Pós-graduação em Ciência de Dados e Analytics da PUC-Rio, utilizando o conhecimento adquirido durante as aulas e explorando a plataforma do Databricks.
 
 ## Sumário
 
@@ -11,18 +11,16 @@ Trabalho de conclusão do módulo de Engenharia de Dados do curso de Pós-gradua
 
 ## Objetivo
 
-O objetivo do trabalho é construir uma pipeline de dados completa, utilizando algum ambiente de nuvem (Databricks, AWS, GCP, etc.), que deve envolver coleta, modelagem, carga e análise dos dados.
+O objetivo do trabalho é construir uma pipeline de dados completa, que deve incluir ingestão/coleta, modelagem e carga, utilizando algum ambiente de cloud (Databricks, AWS, GCP, etc.). Além disso, ao final, é necessário analisar os dados, a fim de responder perguntas prévias realizadas antes do início do trabalho. 
 
-Meu objetivo é pessoal é criar uma pipeline robusta para ingestão, modelagem e análise dos dados públicos da Agência Nacional de Saúde Suplementar (ANS). A agência disponibiliza grandes volumes de dados sobre planos de saúde e beneficiários em formato aberto, que representam um desafio interessante para colocar em prática os conhecimentos adquiridos sobre processamento distribuídos, data warehouses e data lakes, e arquitetura Spark.
-
-A plataforma de nuvem escolhida para hospedar o projeto foi o Databricks.
+Meu objetivo é trabalhar com os dados da Agência Nacional de Saúde Suplementar (ANS) na plataforma do Databricks. A agência disponibiliza grandes volumes de dados sobre planos de saúde e beneficiários em formato aberto, que representam um desafio interessante para colocar em prática os conhecimentos adquiridos sobre processamento distribuídos, data warehouses e data lakes, e arquitetura Spark.
 
 ### Perguntas 
 
-- Qual é o atual índice de sinistralidade no setor de seguros de saúde?
-- Qual é a seguradora mais eficiente do ponto de vista de custo por beneficiário?
-- Quantas empresas de plano de saúde existem no Brasil?
-- Qual foi o market share desse segmento no últimos 10 anos? Houve a entrada de novos players?
+- Qual é o atual índice de sinistralidade no setor de seguros de saúde? Ele está abaixo ou acima da média histórica?
+- Qual é a seguradora mais eficiente do ponto de vista de custo por beneficiário? E se olharmos para porcentagem de prêmio (margem líquida)?
+- Quantas empresas de plano de saúde existem no Brasil? Existem mais planos individuais ou coletivos?
+- Qual foi o market share desse segmento no últimos 10 anos? Houve a entrada de novos players ou a consolidação de algum player?
 
 
 
