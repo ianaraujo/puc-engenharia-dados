@@ -1,6 +1,6 @@
 # Sprint Engenharia de Dados - PUC-Rio
 
-[![License: CC BY-NC](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
+[![License: CC BY-NC](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
 Trabalho de conclusão do módulo de Engenharia de Dados do curso de Pós-graduação em Ciência de Dados e Analytics da PUC-Rio, utilizando o conhecimento adquirido durante as aulas e explorando a plataforma do Databricks.
 
