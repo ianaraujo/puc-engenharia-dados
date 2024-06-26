@@ -20,7 +20,8 @@ Meu objetivo é trabalhar com os dados da Agência Nacional de Saúde Suplementa
 - Qual é o atual índice de sinistralidade no setor de seguros de saúde? Ele está abaixo ou acima da média histórica?
 - Qual é a seguradora mais eficiente do ponto de vista de custo por beneficiário? E se olharmos para porcentagem de prêmio (margem líquida)?
 - Quantas empresas de plano de saúde existem no Brasil? Existem mais planos individuais ou coletivos?
-- Qual foi o market share desse segmento no últimos 10 anos? Houve a entrada de novos players ou a consolidação de algum player?
+- Quantos beneficiários existem no Brasil? Qual é a taxa de cobertura?
+- Qual foi o market share (em número de beneficiários) desse segmento no últimos 10 anos? Houve a entrada de novos players ou a consolidação de algum player?
 
 
 
