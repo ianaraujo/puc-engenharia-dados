@@ -6,9 +6,11 @@
 
 import requests
 from requests.exceptions import HTTPError
-from zipfile import ZipFile
+
 from io import BytesIO
-from pyspark.sql import SparkSession
+from zipfile import ZipFile
+
+from pyspark.sql import SparkSession, DataFrame
 
 BASE_URL = 'https://dadosabertos.ans.gov.br/FTP/PDA/demonstracoes_contabeis/'
 
@@ -27,75 +29,72 @@ class Collector:
         
         self.spark = SparkSession.builder.appName('CollectData').getOrCreate()
 
-    def generate_urls(self): 
+    def generate_urls(self) -> list[str]: 
         years = range(self.start_year, self.end_year + 1)
         urls = [BASE_URL + f'{str(year)}/{quarter}T{str(year)}.zip' for year in years for quarter in range(1, 5)]
 
+        # Add specific path name for 3T2017
+        alternative_url = BASE_URL + '2017/3-Trimestre.zip'
+        urls = [alternative_url if url == BASE_URL + '2017/3T2017.zip' else url for url in urls]
+
         return urls
     
-    def fetch_data(self, target_urls):
-        spark_dataframes = []
+    def fetch_data(self, target_url: str) -> DataFrame:
+        """
+        Downloads a zipped file from source, saves as a temp file to be read by Spark and returns a Spark DataFrame.
+        """
+        try:
+            response = requests.get(target_url)
+            response.raise_for_status()
+        
+        except requests.HTTPError as e:
+            print(f'HTTP Error: {e}')
+            return None
+           
+        file_content = BytesIO(response.content)
 
-        for url in target_urls:
-            try:
-                response = requests.get(url)
-                response.raise_for_status()
+        with ZipFile(file_content, 'r') as zip:
+            file = [file for file in zip.namelist() if file.endswith('.csv')]
+
+            if len(file) > 1:
+                raise ValueError(f'Expected only one CSV file in {target_url}')
             
-            except requests.HTTPError as e:
-                print(f'HTTP Error: {e}')
+            csv_file_name = file[0]
+
+            with zip.open(csv_file_name) as data:
+                temp_path = '/tmp/'
+                
+                with open(temp_path + csv_file_name, 'wb') as temp_file:
+                    temp_file.write(data.read())
+
+            df = self.spark.read.csv(
+                path=temp_path,
+                sep=';',
+                encoding='latin1',
+                header=True,
+                inferSchema=True
+            )    
+            
+        return df
+
+    def ingest_bronze(self) -> None:
+        urls = self.generate_urls()
+
+        for url in urls:
+            print(f'Collecting data from {url} ...')
+            df = self.fetch_data(url)
+
+            if df is None:
+                print(f'Failed to dowload data at {url}')
                 continue
 
-            file_content = BytesIO(response.content)
+            table_name = f"bronze.demonstracoes_contabeis.{url.split('/')[-1].replace('.zip', '')}"
 
-            with ZipFile(file_content, 'r') as zip:
-                file = [file for file in zip.namelist() if file.endswith('.csv')]
-
-                if len(file) != 1:
-                    print(f'Expected only one CSV file in {url}')
-                    continue
-
-                with zip.open(file[0]) as data:
-                    temp_path = 'dbfs:/tmp/{file[0]}'
-
-                    with open(temp_path, 'wb') as temp_file:
-                        temp_file.write(data.read())
-
-                    df = self.spark.read.csv(
-                        'file:' + temp_path, 
-                        sep=';',
-                        encoding='latin1',
-                        header=True,
-                        inferSchema=True
-                    )
-
-                    dbutils.fs.rm(temp_path)
-                
-                    spark_dataframes.append(df)
+            df.write.mode('overwrite').format('delta').saveAsTable(table_name)
         
-        if not spark_dataframes:
-            return None
-        
-        full_df = spark_dataframes[0]
-        
-        for df in spark_dataframes[1:]:
-            full_df = full_df.union(df)
-            
-        return full_df
-
-    def download_data(self):
-        urls = self.generate_urls()
-        full_df = self.fetch_data(urls)
-
-        return full_df
-
+        print('Bronze data ingested successfully!')
 
 # COMMAND ----------
 
 collector = Collector(start_year=2014, end_year=2023) # 10 anos
-
-df = collector.download_data()
-
-if df.isEmpty():
-    raise ValueError('No valid data found')
-
-df.show(10)
+collector.ingest_bronze()
