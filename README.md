@@ -1,4 +1,4 @@
-# Sprint Engenharia de Dados - PUC-Rio
+# Engenharia de Dados - PUC-Rio
 
 [![License: CC BY-NC](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
