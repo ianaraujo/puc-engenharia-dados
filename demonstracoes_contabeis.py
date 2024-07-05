@@ -6,6 +6,7 @@ from io import BytesIO
 from zipfile import ZipFile
 
 from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql.functions import regexp_replace, to_date, year, quarter
 
 BASE_URL = 'https://dadosabertos.ans.gov.br/FTP/PDA/demonstracoes_contabeis/'
 
@@ -104,14 +105,72 @@ collector.run()
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC
-# MAGIC SELECT * FROM bronze.ans.demonstracoes_contabeis
-# MAGIC LIMIT 10
+def process_silver(path: str) -> DataFrame: 
+    """
+    Process data and create silver layer.
+    """	
+    df = spark.read.format('delta').table(path)
+
+    # fix data types
+    df = (df.drop('DESCRICAO', 'VL_SALDO_FINAL')
+          .withColumn('VL_SALDO_INICIAL', regexp_replace('VL_SALDO_INICIAL', ',', '.').cast('double'))
+          .withColumn('DATA', to_date(df['DATA'], format='dd/MM/yyyy'))
+    )
+
+    # remove null dates
+    df = df.filter(df['DATA'].isNotNull())
+
+    # evolve schema
+    transformed_df = df.select(
+        year('DATA').alias('ANO'),
+        quarter('DATA').alias('TRIMESTRE'),
+        'REG_ANS',
+        'CD_CONTA_CONTABIL',
+        'VL_SALDO_INICIAL'
+    )
+
+    return transformed_df
 
 # COMMAND ----------
 
 # MAGIC %sql
 # MAGIC
-# MAGIC SELECT * FROM bronze.ans.demonstracoes_contabeis
-# MAGIC WHERE VL_SALDO_FINAL IS NOT NULL
+# MAGIC SELECT COUNT(*) AS total FROM bronze.ans.demonstracoes_contabeis
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC
+# MAGIC WITH total_rows AS (
+# MAGIC     SELECT COUNT(*) AS total FROM bronze.ans.demonstracoes_contabeis
+# MAGIC )
+# MAGIC
+# MAGIC SELECT 
+# MAGIC     COUNT(CASE WHEN VL_SALDO_INICIAL IS NOT NULL THEN 1 END) AS count_saldo_inicial,
+# MAGIC     COUNT(CASE WHEN VL_SALDO_FINAL IS NOT NULL THEN 1 END) AS count_saldo_final,
+# MAGIC     COUNT(CASE WHEN VL_SALDO_INICIAL IS NOT NULL THEN 1 END) * 100 / total_rows.total AS percent_saldo_inicial,
+# MAGIC     COUNT(CASE WHEN VL_SALDO_FINAL IS NOT NULL THEN 1 END) * 100 / total_rows.total AS percent_saldo_final
+# MAGIC FROM bronze.ans.demonstracoes_contabeis, total_rows
+# MAGIC GROUP BY total_rows.total
+# MAGIC
+
+# COMMAND ----------
+
+table = 'demonstracoes_contabeis'
+source_database = 'bronze.ans'
+target_database = 'silver.ans'
+
+df_silver = process_silver(path=f'{source_database}.{table}')
+df_silver.show()
+
+(df_silver.write
+    .format('delta')
+    .mode('overwrite')
+    .saveAsTable(f'{target_database}.{table}')
+)
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC
+# MAGIC SELECT * FROM silver.ans.demonstracoes_contabeis
