@@ -1,7 +1,5 @@
 # Databricks notebook source
 import requests
-from requests.exceptions import HTTPError
-
 from io import BytesIO
 from zipfile import ZipFile
 
