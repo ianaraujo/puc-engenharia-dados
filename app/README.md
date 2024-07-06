@@ -10,7 +10,7 @@ Essa é a etapa final do nosso pipeline ETL. Esse processo permite persistir os 
 
 A primeira coisa que precisa ser feita é configurar um arquivo `.env` na raiz do projeto com as credenciais necessárias para a AWS permitir que nossa aplicação leia os dados do bucket no S3.
 
-```bash
+```shell
 AWS_ACCESS_KEY_ID=XXXXXXXXXXXXXXXXXX
 AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
@@ -22,7 +22,7 @@ Após definir as variáveis de ambiente, configuramos um arquivo `docker-compose
 
 A aplicação utiliza o SQLite, mas pode ser utilizada qualquer outro DBMS ou serviços como BigQuery e Amazon Athena.
 
-```docker
+```yaml
 services:
   metabase:
     image: metabase/metabase
@@ -49,19 +49,19 @@ O arquivo do banco de dados é salvo dentro do container do Metabase, em `/home/
 
 Para iniciar todos os containers da aplicação:
 
-```bash
+```shell
 docker compose up -d
 ```
 
 E para deletar todos os container, caso deseje fazer alterações:
 
-```bash
+```shell
 docker compose down
 ```
 
 O serviço de `full-load` pode ser executado de forma independente para executar a pipeline por acionamento manual ou de algum scheduler. Isso faz com que as tabelas sejam atualizadas com os dados mais recentes. 
 
-```bash
+```shell
 docker compose start full-load
 ```
 
