@@ -89,4 +89,8 @@ S3_OBJECT_KEYS = {
 
 ### Metabase
 
-O Metabase é uma ferramenta de BI opensource que permite 
+O Metabase é uma ferramenta de BI de código aberto, que permite que os usuários paguem por uma solução 'administrada' ou gerenciem sua própria infraestrutura.
+
+Nesse projeto o Metabase está sendo hospedado em uma instância EC2, mas pode ser hospedado localmente também.
+
+Após fazer toda configuração da aplicação e inicar os containers, você pode acessar `localhost:3000` no navegador, ou `<ENDERECO_IP_SERVIDOR>:3000` se estiver usando servidores remotos, para configurar o Metabase e começar a criar consultar e visualizações.  
