@@ -4,7 +4,7 @@ from io import BytesIO
 from zipfile import ZipFile
 
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import regexp_replace, to_date, year, quarter
+import pyspark.sql.functions as F
 
 BASE_URL = 'https://dadosabertos.ans.gov.br/FTP/PDA/demonstracoes_contabeis/'
 
@@ -103,16 +103,16 @@ collector.run()
 
 # COMMAND ----------
 
-def process_silver(path: str) -> DataFrame: 
+def process_silver(source: str) -> DataFrame: 
     """
     Process data and create silver layer.
     """	
-    df = spark.read.format('delta').table(path)
+    df = spark.read.format('delta').table(source)
 
     # fix data types
     df = (df.drop('DESCRICAO', 'VL_SALDO_FINAL')
-          .withColumn('VL_SALDO_INICIAL', regexp_replace('VL_SALDO_INICIAL', ',', '.').cast('double'))
-          .withColumn('DATA', to_date(df['DATA'], format='dd/MM/yyyy'))
+          .withColumn('VL_SALDO_INICIAL', F.regexp_replace('VL_SALDO_INICIAL', ',', '.').cast('double'))
+          .withColumn('DATA', F.to_date(df['DATA'], format='dd/MM/yyyy'))
     )
 
     # remove null dates
@@ -120,14 +120,45 @@ def process_silver(path: str) -> DataFrame:
 
     # evolve schema
     transformed_df = df.select(
-        year('DATA').alias('ANO'),
-        quarter('DATA').alias('TRIMESTRE'),
+        F.year('DATA').alias('ANO'),
+        F.quarter('DATA').alias('TRIMESTRE'),
         'REG_ANS',
         'CD_CONTA_CONTABIL',
         'VL_SALDO_INICIAL'
     )
 
     return transformed_df
+
+# COMMAND ----------
+
+def sinistralidade_gold(source: str) -> DataFrame:
+    """
+    Process data and create 'sinistralidade' gold layer.
+    """
+    contas = {'41': 'DESPESAS', '311': 'RECEITAS'}
+
+    df = spark.read.format('delta').table(source)
+    
+    filter_df = df.filter(df.CD_CONTA_CONTABIL.isin(list(contas.keys())))
+
+    pivot_df = filter_df \
+        .groupBy(['ANO', 'TRIMESTRE']) \
+        .pivot('CD_CONTA_CONTABIL') \
+        .agg(F.sum('VL_SALDO_INICIAL'))
+
+    pivot_df = pivot_df.withColumnsRenamed(contas)
+
+    formula = (F.col('DESPESAS') / F.col('RECEITAS'))
+    
+    final = pivot_df \
+        .withColumn('SINISTRALIDADE', formula) \
+        .select(
+            'ANO', 
+            'TRIMESTRE', 
+            F.round(F.col('SINISTRALIDADE') * 100, 2).alias('SINISTRALIDADE')) \
+        .orderBy(['ANO', 'TRIMESTRE'], ascending=True)
+    
+    return final
 
 # COMMAND ----------
 
@@ -155,16 +186,21 @@ def process_silver(path: str) -> DataFrame:
 # COMMAND ----------
 
 table = 'demonstracoes_contabeis'
-source_database = 'bronze.ans'
-target_database = 'silver.ans'
+database = 'ans'
 
-df_silver = process_silver(path=f'{source_database}.{table}')
+path_name = f'{database}.{table}'
+
+# COMMAND ----------
+
+# silver layer
+
+df_silver = process_silver(source=f'bronze.{path_name}')
 df_silver.show()
 
 (df_silver.write
     .format('delta')
     .mode('overwrite')
-    .saveAsTable(f'{target_database}.{table}')
+    .saveAsTable(f'silver.{path_name}')
 )
 
 # COMMAND ----------
@@ -172,3 +208,14 @@ df_silver.show()
 # MAGIC %sql
 # MAGIC
 # MAGIC SELECT * FROM silver.ans.demonstracoes_contabeis
+
+# COMMAND ----------
+
+sinistralidade = sinistralidade_gold(source=f'silver.{path_name}')
+sinistralidade.display()
+
+(sinistralidade.write
+    .format('delta')
+    .mode('overwrite')
+    .saveAsTable(f'gold.{database}.sinistralidade')
+)
