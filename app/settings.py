@@ -8,8 +8,10 @@ AWS_CREDENTIALS = {
     'region_name': 'us-east-2'
 }
 
-BUCKET = 'databricks-gold-layer'
+BUCKET = 'databricks-gold-ans'
 
 S3_OBJECT_KEYS = {
-    'sinistralidade': 'sinistralidade.parquet'
+    'sinistralidade': 'sinistralidade.parquet',
+    'market_share': 'market_share.parquet',
+    'num_beneficiarios': 'num_beneficiarios_2024_05.parquet'
 }

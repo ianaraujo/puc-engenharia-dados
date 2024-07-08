@@ -39,8 +39,6 @@ def full_load_database(con: sqlite3.Connection, objects: dict) -> None:
     for table, key in objects.items():
 
         data = read_from_s3(BUCKET, key)
-        data['TESTE'] = 'TESTE22222 COLUMN'
-        data['TESTE2'] = 'TESTE COLUMN'
 
         data.to_sql(table, con, if_exists='replace', index=False)
         
