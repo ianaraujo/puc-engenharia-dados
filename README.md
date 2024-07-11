@@ -15,7 +15,15 @@ Trabalho de conclusão do módulo de Engenharia de Dados do curso de Pós-gradua
 - [3. Modelagem](#modelagem)
   - [3.1 Delta Lakehouse](#delta-lakehouse)
   - [3.2 Linhagem dos Dados](#linhagem-dos-dados)
+  - [3.3 Exemplo: Custo por Beneficiário](#exemplo-custo-por-beneficiário)
 - [4. Carga](#carga)
+  - [4.1 Export para AWS](#export) 
+  - [4.2 Databricks Workflows](#databricks-workflows)
+- [5. Análise](#análise)
+  - [5.1 Qualidade](#qualidade)
+  - [5.2 Perguntas](#perguntas-1)
+  - [5.3 Metabase](#metabase)
+- [6. Autoavaliação](#autoavaliação)
 
 ## Objetivo
 
@@ -49,11 +57,11 @@ As perguntas/problemas que desejo responder através das análises são:
 
 ## Coleta
 
-A ANS disponbiliza todos os seus dados abertos através de um servidor FTP em sua Plataforma de Dados Abertos, que pode ser acessado através do [link](https://dadosabertos.ans.gov.br/FTP/PDA/).
+A ANS disponbiliza todos os seus dados através de um servidor FTP em sua Plataforma de Dados Abertos, que pode ser acessado através do [link](https://dadosabertos.ans.gov.br/FTP/PDA/).
 
 Os dados tem boa qualidade, no geral, e são bem organizados, sendo a grande maioria acompanhada de uma arquivo de metadados ou catálogo. Algums catálogos informam, inclusive, que alguns campos são chaves estrangeiras de tabelas em outros conjuntos de dados, o que é muito útil.
 
-Alguns dados utlizados, como apresentado, tem grandes volumes, como o cadastro de beneficiário ativos, divulgado mensalmennte, que possui cerca de 10GB em arquivos .csv, totalizando cerca de 14,5 milhões de registros e 22 atributos.
+Alguns dados utlizados, como apresentado, tem grandes volumes, como o cadastro de beneficiário ativos, divulgado mensalmennte, que possui cerca de 10 GB em arquivos .csv, totalizando cerca de 14,5 milhões de registros e 22 atributos.
 
 Os dados são disponibilizados em arquivos compactados .zip, por isso, o código para coleta de dados envolvia, quase sempre, extrair os arquivos, lê-los em memória, e salvar em um volume no Databricks, que serviu como landing/camada raw.
 
@@ -137,38 +145,148 @@ class Collector:
 
 ## Modelagem
 
-O modelo de dados escolhido para o trabalho foi o Data Lake, que consiste salvar em um storage dados estruturados e não-estruturados, sem um schema definido, que serão trabalhados em outras etapas ou consumidos por aplicações.
+O modelo escolhido para o trabalho foi o Data Lake, que consiste em salvar os dados estruturados e não-estruturados, sem um schema definido, que serão trabalhados em outras etapas ou consumidos por aplicações.
 
-O problema dos data lakes tradicionais é que os dados são salvos da mesma forma que foram capturados, o que significa - geralmente - que esses dados tem baixa qualidades e não passaram por *constrains* e camadas de processamentos.
+O problema dos data lakes tradicionais é que os dados são salvos da mesma forma que foram capturados, o que significa - geralmente - que esses dados tem baixa qualidades e não passaram por *constrains* e camadas de processamento.
 
 ### Delta Lakehouse
 
-Uma solução para esse problema, muito utilizada na plataforma do Databricks, é o framework open-source **Delta Lake** e a arquitura de Data Lakehouses.
+Uma solução para esse problema, muito utilizada na plataforma do Databricks pela fácil integração, é o framework open-source **Delta Lake** e a arquitura de Data Lakehouses.
 
-Esse framework consiste em uma camada de abstração construída em cima do seu data lake tradicional (Amazon S3, por exemplo), que incentiva a criação de fluxos de dados em camadas, em que cada camada o dado é tratado e é incrementado em nívle de qualidade.
+Esse framework consiste em uma camada de abstração construída em cima do seu data lake tradicional (Amazon S3, por exemplo), que incentiva a criação de fluxos de dados em camadas, em que cada camada o dado é tratado e é trabalhado em níveis incrementais de qualidade.
 
 Essas camadas são:
 
-- **Bronze:** tabelas em formato bruto, com máximo de fidelidade ao dado coletado;
+- **Bronze:** tabelas em formato bruto, com máximo de fidelidade ao dado original coletado;
 - **Silver:** tabelas com estrutura e schema definidos, realizada limpeza e enriquecimento nos dados;
 - **Gold:** tabelas agregadas com métrias de interesse de acordo com a regra de negócio.
 
 ![Delta Lake](/images/delta-lake.png)
 
-### Linhagem dos Dados
+### Linhagem dos Dados e Metastore
 
-A pipeline construída no trabalho utiliza o framework Delta e as tabelas são processadas em camadas bronze, silver e gold. Para ilustrar esse processo de modelagem, podemos observar a linhagem da tabela "gold.ans.custo_beneficiario", que utiliza 3 tabelas bronze como fonte.
+A pipeline do trabalho utiliza o framework Delta e as tabelas são processadas em camadas bronze, silver e gold. 
+
+Ao salvar as tabelas em formato `delta` e utilizando o Unity Catalog, é possível usufruir de funcionalidades integradas do **metastore** do Databricks, como controle de acesso, métrica de uso, visualização de schema e linhagem dos dados.
+
+Para ilustrar essa funcionalidade, podemos observar o diagram de linhagem da tabela `gold.ans.custo_beneficiario`, que utiliza 3 (três) tabelas bronze como fonte primária.
 
 ![Linhagem do Custo por Beneficiário](/images/custo-beneficiario-lineage.png)
 
-Podemos observar como as tabelas na camada bronze (à esquerda da imagem) possuem mais dimensionalidade e, conforme as tabelas avançam no fluxo, é definido um schema, até chegar na tabela *gold* que será consumida para *analystics*.
+Podemos observar o *schema* das tables e como na camada bronze (à esquerda da imagem) essas tabelas possuem maior dimensionalidade, além de dados em tipos inapropriados, nomes de colunas de diferentes formatos, entre outras características de dados com menos qualiades.
 
-A tabela final possui apenas 3 (três) domínios:
+Um exemplo é a coluna "CNPJ" da tabela `bronze.ans.operadoras`, que ao ser lida pelo Spark, foi inferida com tipo `bigint`, enquanto o correto seria `string`. Essa transformação é feita na camada silver e na tabela `silver.ans.operadoras` já podemos ver a mudança feita. 
+
+O código utilizado para transformação desses dados na camada silver pode ser encontrado em [/src/silver/silver_operadoras.py](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/src/silver/silver_operadoras.py).
+
+silver_operadoras.py
+
+```python
+df = spark.sql(f'SELECT * FROM bronze.{schema}.{table}')
+
+upper_cols = [col.upper() for col in df.columns]
+
+df = df.toDF(*upper_cols)
+
+final = df \
+    .withColumn('REGISTRO_ANS', df['REGISTRO_ANS'].cast('string')) \
+    .withColumn('RAZAO_SOCIAL', F.regexp_replace(F.col('RAZAO_SOCIAL'), r'[./]', '')) \
+    .withColumn('RAZAO_SOCIAL', F.regexp_replace(F.col('RAZAO_SOCIAL'), r'\b(LTDA|SA|EIRELI|ME|EPP)\b', '')) \
+    .withColumn('RAZAO_SOCIAL', F.regexp_replace(F.col('RAZAO_SOCIAL'), r' - $', '')) \
+    .withColumn('CNPJ', df['CNPJ'].cast('string')) \
+    .select(
+        'DATA_REGISTRO_ANS',
+        'REGISTRO_ANS',
+        'CNPJ',
+        'RAZAO_SOCIAL',
+        'NOME_FANTASIA',
+        'MODALIDADE'
+    )
+
+final = final.withColumn('NOME_FANTASIA', F.when(
+    F.col('NOME_FANTASIA').isNull(), F.col('RAZAO_SOCIAL')).otherwise(F.col('NOME_FANTASIA')
+))
+
+
+final.write.mode('overwrite').format('delta').saveAsTable(f'silver.{schema}.{table}')
+```
+
+Destaque para o código que transforma os dados da coluna "CNPJ" em `string`.
+
+```python
+.withColumn('CNPJ', df['CNPJ'].cast('string'))
+```
+
+Além dessa transformação, na camada `silver`, é feito um tratamento da "RAZAO_SOCIAL", removendo termos comuns (LTDA, SA, EIRELI). Quando "NOME_FANTASIA" é `NULL`, o código substitui pela razão social.
+
+### Exemplo: Custo por Beneficiário
+
+Dessa forma, conforme as tabelas avançam no fluxo, é definido um schema, até chegar na tabela *gold* que será consumida no ambiente de *analytics*.
+
+A tabela `gold.ans.custo_beneficiario`, que calcula um indicador setorial relacionado à eficiência da operadora, é um bom exemplo, pois utiliza todas as 3 (três) fontes primárias para ser construída.
+
+Nessa camada, na maioria dos casos, utilizei a linguagem SQL para criar as tabelas:
+
+[custo_beneficiario.sql](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/src/gold/custo_beneficiario.sql)
+
+```sql
+CREATE OR REPLACE TABLE gold.ans.custo_beneficiario
+USING DELTA AS (
+  WITH despesas AS (
+    SELECT ANO, REG_ANS, AVG(VL_SALDO_INICIAL) AS TOTAL_DESPESAS
+    FROM silver.ans.demonstracoes_contabeis
+    WHERE ANO = 2023 AND CD_CONTA_CONTABIL = '41'
+    GROUP BY ANO, REG_ANS
+  ),
+
+  beneficiarios AS (
+    SELECT CD_OPERADORA, SUM(TOTAL_BENEFICIARIOS) AS NUM_BENEFICIARIOS
+    FROM gold.ans.num_beneficiarios
+    GROUP BY CD_OPERADORA
+  ),
+
+  operadoras AS (
+    SELECT * FROM silver.ans.operadoras
+    WHERE LOWER(MODALIDADE) NOT LIKE '%odonto%'
+  )
+
+  SELECT d.REG_ANS, o.NOME_FANTASIA, ROUND(d.TOTAL_DESPESAS / b.NUM_BENEFICIARIOS, 2) AS CUSTO_BENEFICIARIO
+  FROM despesas AS d
+  LEFT JOIN beneficiarios AS b ON d.REG_ANS = b.CD_OPERADORA
+  LEFT JOIN operadoras AS o ON d.REG_ANS = o.REGISTRO_ANS
+  WHERE b.NUM_BENEFICIARIOS > 0 AND d.TOTAL_DESPESAS > 0
+);
+```
+
+Ao final do fluxo de transformações, a tabela na camada `gold` possui apenas 3 (três) domínios, seguindo o catálogo abaixo:
 
 | Variável | Tipo de Dado | Descrição |
 | -------- | ------------ | --------- |
 | REG_ANS | string | Código ANS de identificação da operadora |
 | NOME_FANTASIA | string | Nome fantasia da operadora |
 | CUSTO_BENEFICIARIO | double | Custo por beneficiário em reais (R$) por trimestre |
+
+Essa tabela final está pronta para ser consumida por dashboards ou por *stakeholders* dentro da organização, sendo possível rankear as empresas da mais eficiene para menos eficientes, assim como fazer *joins* com outras tabelas, como `gold.ans.market_share`, e comparar a eficiência entre as líderes do mercado.
  
 ## Carga
+
+etl em linhas gerais
+onde estao o arquivos da pipelines
+
+### Export para AWS
+
+explicar estapa final do etl
+
+### Databricks Workflows
+
+orquestracao de pipelines
+
+## Análise
+
+### Qualidade
+
+### Perguntas
+
+### Metabase
+
+## Autoavaliação
