@@ -1,15 +1,18 @@
+import os
+import shutil
 import boto3
-import sqlite3
 import pandas as pd
 
-import shutil
-import os
+from sqlalchemy import Engine, create_engine
 
 from settings import (
-    DATABASE, AWS_CREDENTIALS, BUCKET, S3_OBJECT_KEYS
+    DATABASE_URL, AWS_CREDENTIALS, BUCKET, S3_OBJECT_KEYS
 )
 
+
 temp_dir = 'tmp/'
+
+engine = create_engine(DATABASE_URL)
 
 s3 = boto3.client('s3', **AWS_CREDENTIALS)
 
@@ -32,7 +35,7 @@ def read_from_s3(bucket: str, key: str) -> pd.DataFrame:
     return table
 
 
-def full_load_database(con: sqlite3.Connection, objects: dict) -> None:
+def full_load_database(engine: Engine, objects: dict) -> None:
     """
     Receive a mapping of object sources and load the database.
     """
@@ -40,15 +43,15 @@ def full_load_database(con: sqlite3.Connection, objects: dict) -> None:
 
         data = read_from_s3(BUCKET, key)
 
-        data.to_sql(table, con, if_exists='replace', index=False)
+        data.to_sql(table, engine, if_exists='replace', index=False)
         
         print(f"Table '{table}' loaded successfully!")
 
 
 if __name__ == '__main__':    
+    
     os.makedirs(temp_dir, exist_ok=True)
     
-    with sqlite3.connect(f'{DATABASE}.db') as con:
-        full_load_database(con, objects=S3_OBJECT_KEYS)
+    full_load_database(engine, objects=S3_OBJECT_KEYS)
 
     shutil.rmtree(temp_dir)

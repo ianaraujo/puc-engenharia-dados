@@ -1,12 +1,16 @@
 boto3==1.34.140
 botocore==1.34.140
+greenlet==3.0.3
 jmespath==1.0.1
 numpy==2.0.0
 pandas==2.2.2
+psycopg2-binary==2.9.9
 pyarrow==16.1.0
 python-dateutil==2.9.0.post0
 pytz==2024.1
 s3transfer==0.10.2
 six==1.16.0
+SQLAlchemy==2.0.31
+typing_extensions==4.12.2
 tzdata==2024.1
 urllib3==2.2.2
