@@ -6,6 +6,8 @@ Trabalho de conclusão do módulo de Engenharia de Dados do curso de Pós-gradua
 
 ![Overview do Projeto](/images/overview-projeto.png)
 
+O produto final desse trabalho é um dashboard, criado usando Metabase. Ele pode ser acessado publicamente [aqui]().
+
 ## Sumário
 
 - [1. Objetivo](#objetivo)
@@ -22,6 +24,12 @@ Trabalho de conclusão do módulo de Engenharia de Dados do curso de Pós-gradua
 - [5. Análise](#análise)
   - [5.1 Qualidade](#qualidade)
   - [5.2 Perguntas](#perguntas-1)
+    - [5.2.1 Sinistralidade](#1-qual-é-o-atual-índice-de-sinistralidade-no-setor-de-seguros-de-saúde-ele-está-abaixo-ou-acima-da-média-histórica)
+    - [5.2.2 Custo por Beneficiário](#2-qual-é-a-seguradora-mais-eficiente-do-ponto-de-vista-de-custo-por-beneficiário)
+    - [5.2.3 Número de Operadors](#3-quantas-empresas-de-plano-de-saúde-existem-no-brasil)
+    - [5.2.4 Planos Individuais e Coletivos](#4-existem-mais-planos-individuais-ou-coletivos)
+    - [5.2.5 Taxa de Cobertura](#5-quantos-beneficiários-existem-no-brasil-qual-é-a-taxa-de-cobertura)
+    - [5.2.6 Market Share](#6-qual-é-o-market-share-em-número-de-beneficiários-no-segmento-médico-hospitalar)
   - [5.3 Metabase](#metabase)
 - [6. Autoavaliação](#autoavaliação)
 
@@ -43,17 +51,17 @@ Também utilizei algumas instâncias EC2, além dos clusters criados pelo Databr
 
 As perguntas/problemas que desejo responder através das análises são:
 
-- Qual é o atual índice de sinistralidade no setor de seguros de saúde? Ele está abaixo ou acima da média histórica?
+1. Qual é o atual índice de sinistralidade no setor de seguros de saúde? Ele está abaixo ou acima da média histórica?
 
-- Qual é a seguradora mais eficiente do ponto de vista de custo por beneficiário?
+2. Qual é a seguradora mais eficiente do ponto de vista de custo por beneficiário?
 
-- Quantas empresas de plano de saúde existem no Brasil?
+3. Quantas empresas de plano de saúde existem no Brasil?
 
-- Existem mais planos individuais ou coletivos?
+4. Existem mais planos individuais ou coletivos?
 
-- Quantos beneficiários existem no Brasil? Qual é a taxa de cobertura?
+5. Quantos beneficiários existem no Brasil? Qual é a taxa de cobertura?
 
-- Qual é o market share em número de beneficiários no segmento médico-hospitalar?
+6. Qual é o market share em número de beneficiários no segmento médico-hospitalar?
 
 ## Coleta
 
@@ -270,23 +278,140 @@ Essa tabela final está pronta para ser consumida por dashboards ou por *stakeho
  
 ## Carga
 
-etl em linhas gerais
-onde estao o arquivos da pipelines
+Todas as etapas da pipelines de ETL (extração, transformação e carga) foram feitas de forma automatizada e utilizando Python (pyspark) e SQL. 
+
+Se consideramos a etapa de ingestão da camada `raw`, o processo se assemelha a um ELT (extração, carga e transformção), de modo que os dados são coletados e carregados como arquivos no formato original (.csv) em uma camada *landing* e só depois são transformados em tabelas `delta`.
+
+A escolha por adotar uma pipeline de ELT, em alguns momentos, se deu em razão do grande volume dos dados dos datasets de `demostracoes_contabeis` e `beneficiarios`, e pela eficiência gerada por essa abordagem: operações mais rápidas e sobrecarga reduzida nos clusters.
+
+Todos os arquivos utilizado para a pipeline de ETL (ELT), separados em camadas bronze, silver e gold, podem ser cosultado neste repositório na pasta `/src`.
+
+Aqui estão os links para os arquivos:
+
+#### Bronze
+
+- [bronze_beneficiarios.py](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/src/bronze/bronze_beneficiarios.py)
+- [bronze_demonstracoes_contabeis.py](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/src/bronze/bronze_demonstracoes_contabeis.py)
+- [bronze_operadoras.py](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/src/bronze/bronze_operadoras.py)
+
+#### Silver
+
+- [silver_beneficiarios.py](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/src/silver/silver_beneficiarios.py)
+- [silver_demonstracoes_contabeis.py](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/src/silver/silver_demonstracoes_contabeis.py)
+- [silver_operadoras.py](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/src/silver/silver_operadoras.py)
+
+#### Gold
+
+- [sinistralidade.py](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/src/gold/sinistralidade.py)
+- [custo_beneficiario.sql](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/src/gold/custo_beneficiario.sql)
+- [num_beneficiarios.sql](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/src/gold/num_beneficiarios.sql)
+- [num_operadoras.sql](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/src/gold/num_beneficiarios.sql)
+- [market_share.sql](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/src/gold/market_share.sql)
 
 ### Export para AWS
 
-explicar estapa final do etl
+Além dos códigos utilizados para pipeline dos dados da ANS, no diretório `/src`, também pode ser encontrado o arquivo `export.py`.
+
+Por ter usado o Databricks Premium, após o período de teste de 14 dias utilizado para realização do trabalho, não farei mais uso do workspace e ambiente de Delta Lake construído, visando a incidência de custos adicionais.
+
+Para manter os dados produzidos, mesmo após encerrar o workspace no ambiente do Databricks, criei um *shared volume* - que liga o Databricks a um storage externo ao ambiente, no meu caso o S3, e o script Python acima carrega todas as tabelas na camada `gold` e carrega nesse volume em formato `parquet`.
+
+Dessa forma, eu tenho acesso ao dados do Databricks no meu ambiente da AWS, mesmo após encerrar meu período de utlização do Databricks.
+
+O código utilizado para realizar essa etapa final foi:
+
+[export.py]()
+
+```python
+bucket = 'databricks-gold-ans'
+database = 'gold.ans'
+
+tables = spark.sql(f'show tables in {database}')
+
+
+def export_parquet(bucket: str, database: str, table: DataFrame) -> None:
+    df = spark.read.table(f'{database}.{table.tableName}') 
+
+    save_path = f'/Volumes/gold/ans/{bucket}/{table.tableName}'
+    
+    df.repartition(1) \
+        .write.mode('overwrite') \
+        .format('parquet') \
+        .option("header","true") \
+        .option("inferSchema", "true") \
+        .save(save_path)
+
+    parquet_file = [file.name for file in dbutils.fs.ls(save_path) if file.name.startswith('part-')]
+
+    dbutils.fs.mv(save_path + "/" + parquet_file[0], f"{save_path}.parquet")
+
+    for file in dbutils.fs.ls(save_path):
+        dbutils.fs.rm(file.path)
+    
+    dbutils.fs.rm(save_path)
+    
+    print(f"Saved '{table.tableName}.parquet' to {bucket}!")
+
+
+for table in tables.collect():
+    export_parquet(bucket, database, table)
+    
+    print("All data exported!")
+```
 
 ### Databricks Workflows
 
-orquestracao de pipelines
+Todos os processos descritos acima, incluindo a coleta dos dados, transformações, carga e exportação dos dados finais para AWS, foram automatizados utilizando a funcionalidade do Databricks Workflows. 
+
+O Databricks Workflows é um serviço integrado na plataforma para fazer a **orquestração de pipelines**, de forma similar a outros serviços no mercado com Airflow, Dagster, Prefect, etc.
+
+Assim como os demais, é possível agendar execuções, *triggers*, monitorar falhas e logs, e definir de forma visual a ordem de execução das tarefas.
+
+A grande vantagem do Databricks Workflows, frente aos outros serviços, é a integração com a plataforma. As tarefas de um workflow pode usar clusters dedicados, que são ligado e depois terminados apenas para execução da pipeline, e podem ser definidas a partir dos próprios Notebooks do Databricks.
+
+Dessa forma, é possível na mesma pipeline utilizar diversas liguagens, como Python, SQL, Scala e R.
+
+Ao final da configuração de um workflow, é possível gerar um arquivo `json`, que salvei em [workflows/pipeline.json](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/workflows/pipeline.json), e permite versionar os *jobs*. Além de produzir uma visualização da sua pipeline:
+
+![Databricks Workflows](/images/workflow-tasks.png)
+![Databricks Workflows 2](/images/workflow-run.png)
+
+Podemos ver na imagem que a pipeline teve duração total de 18 minutos e 27 segundos, e todas as tarefas foram concluídas com sucesso. No contexto de *big data* e janelas de produção `batch` não é um tempo muito grande, embora exista margem para tornar o código mais eficiente ou utilizar clusters mais potentes, o que aceleraria a execução da pipeline.
 
 ## Análise
 
 ### Qualidade
 
+Se tratando de dados disponibilizados por uma agência reguladora, como é o caso da Agência Nacional de Saúde Suplementar (ANS), não tive grandes problemas em relação a qualidade dos dados.
+
+Além do mais, a ANS possui um [Plano de Dados Abertos - PDA 2024-2026](https://www.gov.br/ans/pt-br/acesso-a-informacao/perfil-do-setor/dados-abertos-1#:~:text=Plano%20de%20Dados%20Abertos%20%2D%20PDA,Federal%20no%20%C3%A2mbito%20da%20ANS.), que visa implementar  "ações de planejamento, promoção, execução e melhoria de ações estratégicas e operacionais relacionadas à Política de Dados Abertos", o que mostra uma preocupação com a qualidade da informação divulgada.
+
+É possível encontrar todos os conjuntos de dados em um só lugar de maneira organizada e documentos. Os arquivos seguem padrões de nomenclatura, portanto, é fácil iterar por eles e encontrar de forma programática os dados que precisam ser coletados.
+
+Como comentado no início do trabalho, a agência divulga catálogos e metadados sobre seus conjuntos, até mesmo informando sobre relacionamentos entre tabelas, que são bem normalizadas.
+
+Portanto, não encontrei desafios frente a qualidade dos dados. As transformações que precisei fazer se concentraram em adequar o schema para o caso de uso e o tratamento de alguns poucos dados nulos.
+
 ### Perguntas
+
+As perguntas poderiam ter sido respondidas no ambiente do Databricks, no entanto, escolhi criar um ambiente separado de Analytics usando o [Metabase](https://www.metabase.com/), um serviço open-source de BI e dashboards.
+
+No Metabase é possível definir "Questions", que podem ser consultas SQL. Após criar as *questions*, organizadas em coleções lógicas específicas, elas podem ser usadas para criar dashboards.
+
+#### 1. Qual é o atual índice de sinistralidade no setor de seguros de saúde? Ele está abaixo ou acima da média histórica?
+
+#### 2. Qual é a seguradora mais eficiente do ponto de vista de custo por beneficiário?
+
+#### 3. Quantas empresas de plano de saúde existem no Brasil?
+
+#### 4. Existem mais planos individuais ou coletivos?
+
+#### 5. Quantos beneficiários existem no Brasil? Qual é a taxa de cobertura?
+
+#### 6. Qual é o market share em número de beneficiários no segmento médico-hospitalar?
 
 ### Metabase
 
 ## Autoavaliação
+
+![Configuração do Cluster](/images/cluster-details.png)
