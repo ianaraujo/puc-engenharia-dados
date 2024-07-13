@@ -6,7 +6,7 @@ Trabalho de conclusão do módulo de Engenharia de Dados do curso de Pós-gradua
 
 ![Overview do Projeto](/images/overview-projeto.png)
 
-O produto final desse trabalho é um dashboard, criado usando Metabase. Ele pode ser acessado publicamente [aqui]().
+O produto final deste trabalho é um dashboard, criado usando Metabase. Ele pode ser acessado publicamente [aqui](http://3.137.169.241:3000/public/dashboard/749258f2-67f9-41a4-9e57-f69c0fb5392b).
 
 ## Sumário
 
@@ -25,25 +25,24 @@ O produto final desse trabalho é um dashboard, criado usando Metabase. Ele pode
   - [5.1 Qualidade](#qualidade)
   - [5.2 Perguntas](#perguntas-1)
     - [5.2.1 Sinistralidade](#1-qual-é-o-atual-índice-de-sinistralidade-no-setor-de-seguros-de-saúde-ele-está-abaixo-ou-acima-da-média-histórica)
-    - [5.2.2 Custo por Beneficiário](#2-qual-é-a-seguradora-mais-eficiente-do-ponto-de-vista-de-custo-por-beneficiário)
-    - [5.2.3 Número de Operadors](#3-quantas-empresas-de-plano-de-saúde-existem-no-brasil)
-    - [5.2.4 Planos Individuais e Coletivos](#4-existem-mais-planos-individuais-ou-coletivos)
-    - [5.2.5 Taxa de Cobertura](#5-quantos-beneficiários-existem-no-brasil-qual-é-a-taxa-de-cobertura)
-    - [5.2.6 Market Share](#6-qual-é-o-market-share-em-número-de-beneficiários-no-segmento-médico-hospitalar)
+    - [5.2.2 Custo por Beneficiário e Market Share](#2-e-3-qual-é-a-seguradora-mais-eficiente-do-ponto-de-vista-de-custo-por-beneficiário-qual-é-o-market-share-em-número-de-beneficiários-no-segmento-médico-hospitalar)
+    - [5.2.3 Número de Operadors](#4-quantas-empresas-de-plano-de-saúde-existem-no-brasil)
+    - [5.2.4 Taxa de Cobertura](#5-quantos-beneficiários-existem-no-brasil-qual-é-a-taxa-de-cobertura)
+    - [5.2.5 Planos Individuais e Coletivos](#6-existem-mais-planos-individuais-ou-coletivos)
   - [5.3 Metabase](#metabase)
 - [6. Autoavaliação](#autoavaliação)
 
 ## Objetivo
 
-A proposta do trabalho consiste em construir uma pipeline de dados completa, que deve incluir ingestão/coleta, modelagem, transformação e carga, utilizando algum ambiente de computação em nuvem, como Databricks, AWS, GCP e Azure. Além disso, ao final, é necessário analisar os dados, a fim de responder perguntas previamente definidas no início do trabalho. 
+A proposta do trabalho consiste em construir uma pipeline de dados completa, que deve incluir ingestão/coleta, modelagem, transformação e carga, utilizando algum ambiente de computação em nuvem, como Databricks, AWS, GCP e Azure. Além disso, ao final, é necessário analisar os dados, a fim de responder perguntas previamente definidas.
 
 Meu objetivo é trabalhar com os dados da **Agência Nacional de Saúde Suplementar (ANS)** na plataforma do Databricks. A agência disponibiliza grandes volumes de dados sobre operadoras de planos de saúde e beneficiários, em formato aberto. Alguns conjuntos de dados ultrapassam 10GB, o que representa um desafio interessante para colocar em prática os conhecimentos adquiridos sobre processamento distribuído, modelagem de data lakehouses, e arquitetura Apache Spark. 
 
 ### Plataforma
 
-Em relação a plaforma utilizada, optei pelo uso do Databricks na versão Premium, utilizando os 14 dias de free-trial, que se encerram hoje (10/07/2024). Além do Databricks, escolhi a AWS como workspace do Databricks, por já ter alguma familiaridade com a plataforma.
+ Em relação à plataforma utilizada, optei pelo uso do Databricks na versão Premium, utilizando os 14 dias de free-trial, que se encerram hoje (12/07/2024). Além do Databricks, escolhi a AWS como workspace do Databricks, por já ter alguma familiaridade com a plataforma.
 
-A opção por não utilizar o Databricks Community foi visando ter mais contato com uma ambiente "real", mais próximo do utilizado em empresas, e para ter acesso a algumas funcionalidade fundamentais, como a ferramenta de orquestração de pipelines (Databricks Workflows), conexão com reposítório no GitHub, entre outras.
+A opção por não utilizar o Databricks Community foi visando ter mais contato com um ambiente "real", mais próximo do utilizado em empresas, e para ter acesso a algumas funcionalidades fundamentais, como a ferramenta de orquestração de pipelines (Databricks Workflows), conexão com repositório no GitHub, entre outras.
 
 Também utilizei algumas instâncias EC2, além dos clusters criados pelo Databricks, para parte de analytics do trabalho, que vou apresentar mais para frente.
 
@@ -65,17 +64,17 @@ As perguntas/problemas que desejo responder através das análises são:
 
 ## Coleta
 
-A ANS disponbiliza todos os seus dados através de um servidor FTP em sua Plataforma de Dados Abertos, que pode ser acessado através do [link](https://dadosabertos.ans.gov.br/FTP/PDA/).
+A ANS disponibiliza todos os seus dados através de um servidor FTP em sua plataforma de dados abertos, que pode ser acessado através do [link](https://dadosabertos.ans.gov.br/FTP/PDA/).
 
-Os dados tem boa qualidade, no geral, e são bem organizados, sendo a grande maioria acompanhada de uma arquivo de metadados ou catálogo. Algums catálogos informam, inclusive, que alguns campos são chaves estrangeiras de tabelas em outros conjuntos de dados, o que é muito útil.
+Os dados têm boa qualidade, no geral, e são bem organizados, sendo a grande maioria acompanhada de um arquivo de metadados ou catálogo. Alguns catálogos informam, inclusive, que alguns campos são chaves estrangeiras de tabelas em outros conjuntos de dados, o que é muito útil.
 
-Alguns dados utlizados, como apresentado, tem grandes volumes, como o cadastro de beneficiário ativos, divulgado mensalmennte, que possui cerca de 10 GB em arquivos .csv, totalizando cerca de 14,5 milhões de registros e 22 atributos.
+Alguns dados utilizados, como apresentado, têm grandes volumes, como o cadastro de beneficiários ativos, divulgado mensalmente, que possui cerca de 10 GB em arquivos .csv, totalizando cerca de 14,5 milhões de registros e 22 atributos.
 
 Os dados são disponibilizados em arquivos compactados .zip, por isso, o código para coleta de dados envolvia, quase sempre, extrair os arquivos, lê-los em memória, e salvar em um volume no Databricks, que serviu como landing/camada raw.
 
-Após salvar os arquivos no storage, o script fazia a leitura usando `pyspark`, e fazia ingestão na camada bronze, em format Delta. 
+Após salvar os arquivos no storage, o script fazia a leitura usando pyspark, e fazia ingestão na camada bronze, em formato Delta.
 
-O processo de ingestão dos dados e criaçã da camada bronze foi feito através de **classes de ingestão**, como:
+O processo de ingestão dos dados e criação da camada bronze foi feito através de **classes de ingestão**, como:
 
 ```python
 class Collector:
@@ -155,7 +154,7 @@ class Collector:
 
 O modelo escolhido para o trabalho foi o Data Lake, que consiste em salvar os dados estruturados e não-estruturados, sem um schema definido, que serão trabalhados em outras etapas ou consumidos por aplicações.
 
-O problema dos data lakes tradicionais é que os dados são salvos da mesma forma que foram capturados, o que significa - geralmente - que esses dados tem baixa qualidades e não passaram por *constrains* e camadas de processamento.
+O problema dos data lakes tradicionais é que os dados são salvos da mesma forma que foram capturados, o que significa - geralmente - que esses dados têm baixa qualidade e não passaram por *constraints* e camadas de processamento.
 
 ### Delta Lakehouse
 
@@ -177,11 +176,11 @@ A pipeline do trabalho utiliza o framework Delta e as tabelas são processadas e
 
 Ao salvar as tabelas em formato `delta` e utilizando o Unity Catalog, é possível usufruir de funcionalidades integradas do **metastore** do Databricks, como controle de acesso, métrica de uso, visualização de schema e linhagem dos dados.
 
-Para ilustrar essa funcionalidade, podemos observar o diagram de linhagem da tabela `gold.ans.custo_beneficiario`, que utiliza 3 (três) tabelas bronze como fonte primária.
+Para ilustrar essa funcionalidade, podemos observar o diagrama de linhagem da tabela `gold.ans.custo_beneficiario`, que utiliza 3 (três) tabelas bronze como fonte primária.
 
 ![Linhagem do Custo por Beneficiário](/images/custo-beneficiario-lineage.png)
 
-Podemos observar o *schema* das tables e como na camada bronze (à esquerda da imagem) essas tabelas possuem maior dimensionalidade, além de dados em tipos inapropriados, nomes de colunas de diferentes formatos, entre outras características de dados com menos qualiades.
+Podemos observar o *schema* das tables e como na camada bronze (à esquerda da imagem) essas tabelas possuem maior dimensionalidade, além de dados em tipos inapropriados, nomes de colunas de diferentes formatos, entre outras características de dados em menor qualidade.
 
 Um exemplo é a coluna "CNPJ" da tabela `bronze.ans.operadoras`, que ao ser lida pelo Spark, foi inferida com tipo `bigint`, enquanto o correto seria `string`. Essa transformação é feita na camada silver e na tabela `silver.ans.operadoras` já podemos ver a mudança feita. 
 
@@ -268,7 +267,7 @@ USING DELTA AS (
 
 Ao final do fluxo de transformações, a tabela na camada `gold` possui apenas 3 (três) domínios, seguindo o catálogo abaixo:
 
-| Variável | Tipo de Dado | Descrição |
+| Variável | Tipo | Descrição |
 | -------- | ------------ | --------- |
 | REG_ANS | string | Código ANS de identificação da operadora |
 | NOME_FANTASIA | string | Nome fantasia da operadora |
@@ -380,6 +379,8 @@ Podemos ver na imagem que a pipeline teve duração total de 18 minutos e 27 seg
 
 ## Análise
 
+A etapa de análise foi desenvolvida utilizando SQL em um ambiente de analytics criados fora no Databricks, na AWS, utilizando o Metabase. As tabelas da camada `gold` foi carregadas em uma bancos de dados PostgreSQL, sendo possível realizar consultar, responder as perguntas e gerar visualizações.
+
 ### Qualidade
 
 Se tratando de dados disponibilizados por uma agência reguladora, como é o caso da Agência Nacional de Saúde Suplementar (ANS), não tive grandes problemas em relação a qualidade dos dados.
@@ -400,18 +401,126 @@ No Metabase é possível definir "Questions", que podem ser consultas SQL. Após
 
 #### 1. Qual é o atual índice de sinistralidade no setor de seguros de saúde? Ele está abaixo ou acima da média histórica?
 
-#### 2. Qual é a seguradora mais eficiente do ponto de vista de custo por beneficiário?
+O índice de sinistralidade é um importante indicador de **rentabilidade** no setor de seguros, como um todo. No segmento de planos médico-hospitalares não é diferente. Esse indicador consiste na razão entre os "eventos indenizáveis" (sinistros), ou seja, despesas com assistência médica, e o total de receitas provenientes obtidas através dos planos de saúde.
 
-#### 3. Quantas empresas de plano de saúde existem no Brasil?
+Uma métrica de sinistralidade elevada indica que uma grande parte da receita está sendo gasta com os custos referentes aos sinistros, o que pode sinalizar a necessidade de reajustes ou adequação dos serviços oferecidos para garantir a sustentabilidade financeira da operadora. 
 
-#### 4. Existem mais planos individuais ou coletivos?
+Já um índice muito baixo pode indicar uma operação pouco competitiva ou a subutilização dos serviços de saúde, o que também deve ser cuidadosamente monitorado para garantir um equilíbrio justo entre a prestação de serviços e a viabilidade econômica da operadora.
+
+```sql
+SELECT ANO, AVG(SINISTRALIDADE) AS INDEX_SINISTRALIDADE
+FROM sinistralidade
+WHERE SINISTRALIDADE > 0 AND SINISTRALIDADE < 100
+GROUP BY ANO
+ORDER BY ANO ASC;
+```
+
+![Sinistralidade](/images/sinistralidade.png)
+
+O atual índice de sinistralidade é de **71,79%**, que está um pouco acima da média histórica, considerando os últimos anos.
+
+O que chama atenção no gráfico é o ano de 2020, em que se observa uma queda fora do padrão da sinistralidade. Esse fenômeno ocorreu em razão da pandemia do COVID-19, que iniciou em 2020, e fez com que a procura por atendimentos médicos tivesse uma forte queda.
+
+Essa constatação pode parecer contraintuitiva, mas o que observou-se foi uma redução da procura por consultas e procedimentos não emergenciais, exames de rotinas, entre outros, o que impactou na sinistralidade. Após o período do isolamento, houve um crescimento acentuado da sinistralidade, devido a demanda reprimida do período da pandemia, o que deixou muitas empresas do segmento em situação financeira pouco confortável.
+
+#### 2 e 3. Qual é a seguradora mais eficiente do ponto de vista de custo por beneficiário? Qual é o market share em número de beneficiários no segmento médico-hospitalar?
+
+O custo por beneficiário é uma métria de **eficiência** das operadoras de planos de saúdes, que calcula o valor médio gasto pela operadora para fornecer serviços de saúde a cada beneficiário durante um ano. 
+
+As operados atuam em diferentes modelos de negócio, que resulta em estruturas de custo diferentes. Modelos de negócio mais verticalizados, ou seja, operadoras que possuem seus próprios hospitais, clínicas e laboratórios, tendem a ter um controle maior sobre a operação, consequentemente sobre os custos custos, a qualidade dos serviços prestados e eliminando intermediários. 
+
+Outro fator que pode impactar no custo por beneficiário é o market share, que indica o **tamanho** da empresa no mercado em comparação aos concorrentes. O market share poder ser medido de diferentes formas, mas nesse caso está sendo considerado o número de beneficiários.
+
+Empresas maiores, especialmente nesse setor, constumam apresentar ganhos de eficiência e vantagens competitivas, em razão do tamanho, pois a operadora pode otimizar os recursos, negociando melhores preços de medicamentos e equipamentos, em função da escala. Isso também tem grande impacto no custo por beneficiário.
+
+```sql
+SELECT 
+    CASE 
+        WHEN LENGTH(market_share.NOME_FANTASIA) > 16 THEN SUBSTRING(market_share.NOME_FANTASIA FROM 1 FOR 16) || '...'
+        ELSE market_share.NOME_FANTASIA
+    END AS NOME_FANTASIA,
+    market_share.MARKET_SHARE,
+    custo_beneficiario.CUSTO_BENEFICIARIO
+FROM market_share
+LEFT JOIN custo_beneficiario
+ON market_share.CD_OPERADORA = custo_beneficiario.REG_ANS
+LIMIT 10;
+```
+
+![Market Share x Custo por Beneficiário](/images/share_custo.png)
+
+A Hapvida, que é líder do setor, recentemente adquiriu a Notre Dame Intermédica e todas sua rede hospitalar, consolidando um conglomerado de quase **15%** do mercado de planos de saúde, cerca de **7,65 milhões** de beneficiários.
+
+A Hapvida x Intermédica é uma empresa verticalizada, ou seja, ela comercializa os planos de saúde e é dona dos hospitais que prestam serviço para esses planos, o que permite a empresa ter um controle muito maior sobre suas margens, além de se aproveitar dos ganhos de escala.
+
+Esses fatores combinados são os motivos da empresa ter um dos menores custos por beneficiário do mercado, tendo o menor custo entre as 10 maiores, de apenas **R$ 717,54** por beneficiário/ano.
+
+Na ponta oposta, como exemplo, podemos citar o Bradesco Seguros, que não possui nenhum ou rede própria, e terceiriza a prestação dos serviços oferecidos pelos seus planos. O Bradesco, que atualmente é a segunda maior empresa do segmento, se consideramento a junção entre Hapvida e Intermédica, possui um custo médio por beneficiário de **R$ 7.200,00** por ano.
+
+#### 4. Quantas empresas de plano de saúde existem no Brasil?
+
+Atualmente, existem **850** operadoras ativas no Brasil.
+
+```sql
+SELECT DISTINCT COUNT(*) FROM num_operadoras;
+```
 
 #### 5. Quantos beneficiários existem no Brasil? Qual é a taxa de cobertura?
 
-#### 6. Qual é o market share em número de beneficiários no segmento médico-hospitalar?
+Existem no Brasil cerca de **51 milhões** de beneficiários de planos médico-hospitalares, com ou sem assistência odontológica. Se considermos a população brasileira em cerca de 215 milhões, calculamos uma taxa de cobertura de aproximadamente **23%**.
+
+Isso significa que menos de 1/4 da população brasileira possui plano de saúde.
+
+```sql
+SELECT DISTINCT SUM(TOTAL_BENEFICIARIOS) FROM num_beneficiarios;
+
+SELECT DISTINCT SUM("TOTAL_BENEFICIARIOS") / 215300000 FROM num_beneficiarios;
+```
+
+#### 6. Existem mais planos individuais ou coletivos?
+
+Entre os mais de 50 milhões de beneficiários, somente **17%** deles possuem planos individuais ou familiares. A grande maioria dos planos são coletivos, somando **83%**, sendo em grande parte planos empresariais.
+
+```sql
+WITH total_beneficiarios AS (
+    SELECT SUM("TOTAL_BENEFICIARIOS") AS "TOTAL" FROM num_beneficiarios
+)
+
+SELECT 
+    "TIPO_CONTRATACAO_PLANO", 
+    ROUND(SUM("TOTAL_BENEFICIARIOS") / total_beneficiarios."TOTAL", 2) AS "BENEFICIARIOS_RATIO"
+FROM num_beneficiarios, total_beneficiarios
+GROUP BY "TIPO_CONTRATACAO_PLANO", total_beneficiarios."TOTAL";
+```
+
+![Planos](/images/pizza.png)
 
 ### Metabase
 
+Além do ambiente do Databricks, também utilizei um ambiente de analytics criado usando Docker, PostgreSQL e Metabase, rodando em uma instância EC2 na AWS.
+
+Além das tecnologias mencionadas, também escrevi um script em Python ([app/main.py](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/app/main.py)) responsável por fazer a carga *full-load* dos arquivos parquet salvos no S3 diretamente para tabelas no banco de dados PostgreSQL.
+
+Mais informações podem ser encontradar no arquivo [app/README.md](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/app/README.md) dedicado exclusivamente para explicar a configuração desse ambiente.
+
+Além de utilizar o Metabase como ambiente para realizar as consultas e produzir as visualizações, também criei um **dashboard** público, que pode ser acessado livremente através do link:
+
+http://3.137.169.241:3000/public/dashboard/749258f2-67f9-41a4-9e57-f69c0fb5392b
+
+![Dashboard](/images/dashboard.png)
+
 ## Autoavaliação
 
-![Configuração do Cluster](/images/cluster-details.png)
+Acredito ter conseguido atingir os objetivos que desenhei para o trabalho. Sobretudo, a escolha por utilizar o Databricks Premium foi muito acertada, principalmente pelo aprendizado e o contato com as funcionalidades da plataformas.
+
+Desde o início, me planejei para utilizar os 14 dias do free-trial, que utilizei integralmente, e defini um budget de cerca de R$ 150,00 para realização do trabalho.
+
+No Databricks, configurei um cluste de 4 cores e 16 GB de memória, o que se provou suficiente para as tarefas que executei e, sobretudo, um bom equilíbrio entre custo e performance.
+
+No total, desde o dia 27 de junho, tive custo total com a AWS de $20.63, representado por dois serviços principais. As barras em azul representam um custo fixo do workspace do Databricks, que é o NAT Gateway utilizado pelo ambiente. Já as barras na cor vermelha são, de fato, os cluster criados para execução dos *workloads* do trabalho.
+
+![Custos](/images/aws-costs.png)
+
+Agradeço aos professores por todo apoio e pelos ensinamentos.
+
+Ian Vaz Araujo
