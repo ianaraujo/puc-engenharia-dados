@@ -279,11 +279,11 @@ Essa tabela final está pronta para ser consumida por dashboards ou por *stakeho
 
 Todas as etapas da pipelines de ETL (extração, transformação e carga) foram feitas de forma automatizada e utilizando Python (pyspark) e SQL. 
 
-Se consideramos a etapa de ingestão da camada `raw`, o processo se assemelha a um ELT (extração, carga e transformção), de modo que os dados são coletados e carregados como arquivos no formato original (.csv) em uma camada *landing* e só depois são transformados em tabelas `delta`.
+Se considerarmos a etapa de ingestão da camada `raw`, o processo se assemelha a um ELT (extração, carga e transformção), de modo que os dados são coletados e carregados como arquivos no formato original (.csv) em uma camada *landing* e só depois são transformados em tabelas `delta`.
 
-A escolha por adotar uma pipeline de ELT, em alguns momentos, se deu em razão do grande volume dos dados dos datasets de `demostracoes_contabeis` e `beneficiarios`, e pela eficiência gerada por essa abordagem: operações mais rápidas e sobrecarga reduzida nos clusters.
+A escolha por adotar uma pipeline de ELT, em alguns momentos, se deu em razão do grande volume dos conjuntos de dados de `demostracoes_contabeis` e `beneficiarios`, e pela eficiência gerada por essa abordagem: operações mais rápidas e sobrecarga reduzida nos clusters.
 
-Todos os arquivos utilizado para a pipeline de ETL (ELT), separados em camadas bronze, silver e gold, podem ser cosultado neste repositório na pasta `/src`.
+Todos os arquivos utilizado para a pipeline de ETL (ou ELT), separados em camadas bronze, silver e gold, podem ser consultado neste repositório na pasta `/src`.
 
 Aqui estão os links para os arquivos:
 
@@ -313,7 +313,7 @@ Além dos códigos utilizados para pipeline dos dados da ANS, no diretório `/sr
 
 Por ter usado o Databricks Premium, após o período de teste de 14 dias utilizado para realização do trabalho, não farei mais uso do workspace e ambiente de Delta Lake construído, visando a incidência de custos adicionais.
 
-Para manter os dados produzidos, mesmo após encerrar o workspace no ambiente do Databricks, criei um *shared volume* - que liga o Databricks a um storage externo ao ambiente, no meu caso o S3, e o script Python acima carrega todas as tabelas na camada `gold` e carrega nesse volume em formato `parquet`.
+Para manter os dados produzidos, mesmo após encerrar o workspace no ambiente do Databricks, criei um *shared volume* - que liga o Databricks a um storage externo ao ambiente, no meu caso o S3 - e um script Python que carrega todas as tabelas na camada `gold` nesse volume em formato `parquet`.
 
 Dessa forma, eu tenho acesso ao dados do Databricks no meu ambiente da AWS, mesmo após encerrar meu período de utlização do Databricks.
 
@@ -401,7 +401,7 @@ No Metabase é possível definir "Questions", que podem ser consultas SQL. Após
 
 #### 1. Qual é o atual índice de sinistralidade no setor de seguros de saúde? Ele está abaixo ou acima da média histórica?
 
-O índice de sinistralidade é um importante indicador de **rentabilidade** no setor de seguros, como um todo. No segmento de planos médico-hospitalares não é diferente. Esse indicador consiste na razão entre os "eventos indenizáveis" (sinistros), ou seja, despesas com assistência médica, e o total de receitas provenientes obtidas através dos planos de saúde.
+O índice de sinistralidade é um importante indicador de **rentabilidade** no setor de seguros, de forma abrangente. No segmento de planos médico-hospitalares não é diferente. Esse indicador consiste na razão entre os "eventos indenizáveis" (sinistros), ou seja, despesas com assistência médica, e o total de receitas obtidas através dos planos de saúde.
 
 Uma métrica de sinistralidade elevada indica que uma grande parte da receita está sendo gasta com os custos referentes aos sinistros, o que pode sinalizar a necessidade de reajustes ou adequação dos serviços oferecidos para garantir a sustentabilidade financeira da operadora. 
 
@@ -425,13 +425,13 @@ Essa constatação pode parecer contraintuitiva, mas o que observou-se foi uma r
 
 #### 2 e 3. Qual é a seguradora mais eficiente do ponto de vista de custo por beneficiário? Qual é o market share em número de beneficiários no segmento médico-hospitalar?
 
-O custo por beneficiário é uma métria de **eficiência** das operadoras de planos de saúdes, que calcula o valor médio gasto pela operadora para fornecer serviços de saúde a cada beneficiário durante um ano. 
+O custo por beneficiário é uma métria de **eficiência** das operadoras de planos de saúdes, que calcula o valor médio gasto pela operadora para fornecer os serviços de saúde para cada beneficiário durante um ano. 
 
-As operados atuam em diferentes modelos de negócio, que resulta em estruturas de custo diferentes. Modelos de negócio mais verticalizados, ou seja, operadoras que possuem seus próprios hospitais, clínicas e laboratórios, tendem a ter um controle maior sobre a operação, consequentemente sobre os custos custos, a qualidade dos serviços prestados e eliminando intermediários. 
+As operadoras atuam em diferentes modelos de negócio, que resultam em estruturas de custo diferentes. Modelos de negócio mais verticalizados, ou seja, operadoras que possuem seus próprios hospitais, clínicas e laboratórios, tendem a ter um controle maior sobre a operação, consequentemente sobre os custos, a qualidade dos serviços prestados e eliminando intermediários. 
 
 Outro fator que pode impactar no custo por beneficiário é o market share, que indica o **tamanho** da empresa no mercado em comparação aos concorrentes. O market share poder ser medido de diferentes formas, mas nesse caso está sendo considerado o número de beneficiários.
 
-Empresas maiores, especialmente nesse setor, constumam apresentar ganhos de eficiência e vantagens competitivas, em razão do tamanho, pois a operadora pode otimizar os recursos, negociando melhores preços de medicamentos e equipamentos, em função da escala. Isso também tem grande impacto no custo por beneficiário.
+Empresas maiores, especialmente nesse setor, costumam apresentar ganhos de eficiência e vantagens competitivas, em razão do tamanho, pois a operadora pode otimizar os recursos, negociando melhores preços de medicamentos e equipamentos, em função da escala. Isso também tem grande impacto no custo por beneficiário.
 
 ```sql
 SELECT 
@@ -467,7 +467,7 @@ SELECT DISTINCT COUNT(*) FROM num_operadoras;
 
 #### 5. Quantos beneficiários existem no Brasil? Qual é a taxa de cobertura?
 
-Existem no Brasil cerca de **51 milhões** de beneficiários de planos médico-hospitalares, com ou sem assistência odontológica. Se considermos a população brasileira em cerca de 215 milhões, calculamos uma taxa de cobertura de aproximadamente **23%**.
+Existem no Brasil cerca de **51 milhões** de beneficiários de planos médico-hospitalares, com ou sem assistência odontológica. Se considermos o tamanho da população brasileira de cerca de 215 milhões, calculamos uma taxa de cobertura de aproximadamente **23%**.
 
 Isso significa que menos de 1/4 da população brasileira possui plano de saúde.
 
@@ -499,7 +499,7 @@ GROUP BY "TIPO_CONTRATACAO_PLANO", total_beneficiarios."TOTAL";
 
 Além do ambiente do Databricks, também utilizei um ambiente de analytics criado usando Docker, PostgreSQL e Metabase, rodando em uma instância EC2 na AWS.
 
-Além das tecnologias mencionadas, também escrevi um script em Python ([app/main.py](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/app/main.py)) responsável por fazer a carga *full-load* dos arquivos parquet salvos no S3 diretamente para tabelas no banco de dados PostgreSQL.
+Além das tecnologias mencionadas, também escrevi um script em Python ([app/main.py](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/app/main.py)) responsável por fazer a carga *full-load* dos arquivos `parquet` salvos no S3 diretamente nas tabelas do banco de dados PostgreSQL.
 
 Mais informações podem ser encontradar no arquivo [app/README.md](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/app/README.md) dedicado exclusivamente para explicar a configuração desse ambiente.
 
@@ -511,13 +511,13 @@ http://3.137.169.241:3000/public/dashboard/749258f2-67f9-41a4-9e57-f69c0fb5392b
 
 ## Autoavaliação
 
-Acredito ter conseguido atingir os objetivos que desenhei para o trabalho. Sobretudo, a escolha por utilizar o Databricks Premium foi muito acertada, principalmente pelo aprendizado e o contato com as funcionalidades da plataformas.
+Acredito ter conseguido atingir os objetivos propostos para o trabalho. Sobretudo, considero a escolha pelo Databricks Premium muito acertada, principalmente pelo aprendizado e o contato com as funcionalidades da plataforma, mas também por permitir trabalhar em soluções mais avançadas e mais próximas do dia-a-dia das organizações.
 
-Desde o início, me planejei para utilizar os 14 dias do free-trial, que utilizei integralmente, e defini um budget de cerca de R$ 150,00 para realização do trabalho.
+Desde o início, planejei utilizar os 14 dias do free-trial integralmente e defini um *budget* de cerca de R$ 150,00 para realização do trabalho. Esse objetivo foi atingido.
 
-No Databricks, configurei um cluste de 4 cores e 16 GB de memória, o que se provou suficiente para as tarefas que executei e, sobretudo, um bom equilíbrio entre custo e performance.
+No Databricks, configurei um cluster de 4 cores e 16 GB de memória, que utilizei durante esse período e que se provou suficiente para as tarefas executadas. Principalmente, considerando um bom equilíbrio entre custo e performance.
 
-No total, desde o dia 27 de junho, tive custo total com a AWS de $20.63, representado por dois serviços principais. As barras em azul representam um custo fixo do workspace do Databricks, que é o NAT Gateway utilizado pelo ambiente. Já as barras na cor vermelha são, de fato, os cluster criados para execução dos *workloads* do trabalho.
+No total, desde o dia 27 de junho, tive custo total com o trabalho de $20.63, representado por dois serviços principais. As barras em azul representam um custo fixo do workspace do Databricks, que é o NAT Gateway utilizado pelo ambiente para configuração de rede dos clusters. Já as barras na cor vermelha são, de fato, os cluster criados para execução dos *workloads* do trabalho.
 
 ![Custos](/images/aws-costs.png)
 
