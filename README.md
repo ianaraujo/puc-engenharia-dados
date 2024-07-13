@@ -19,7 +19,7 @@ O produto final deste trabalho é um dashboard, criado usando Metabase. Ele pode
   - [3.2 Linhagem dos Dados](#linhagem-dos-dados)
   - [3.3 Exemplo: Custo por Beneficiário](#exemplo-custo-por-beneficiário)
 - [4. Carga](#carga)
-  - [4.1 Export para AWS](#export) 
+  - [4.1 Export para AWS](#export-para-aws) 
   - [4.2 Databricks Workflows](#databricks-workflows)
 - [5. Análise](#análise)
   - [5.1 Qualidade](#qualidade)
@@ -54,13 +54,13 @@ As perguntas/problemas que desejo responder através das análises são:
 
 2. Qual é a seguradora mais eficiente do ponto de vista de custo por beneficiário?
 
-3. Quantas empresas de plano de saúde existem no Brasil?
+3. Qual é o market share em número de beneficiários no segmento médico-hospitalar?
 
-4. Existem mais planos individuais ou coletivos?
+4. Quantas empresas de plano de saúde existem no Brasil?
 
 5. Quantos beneficiários existem no Brasil? Qual é a taxa de cobertura?
 
-6. Qual é o market share em número de beneficiários no segmento médico-hospitalar?
+6. Existem mais planos individuais ou coletivos?
 
 ## Coleta
 
