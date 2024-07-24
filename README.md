@@ -1,12 +1,12 @@
-# Engenharia de Dados - PUC-Rio
+# Projeto de Engenharia de Dados (PUC-Rio)
 
 [![License: CC BY-NC](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-Trabalho de conclusão do módulo de Engenharia de Dados do curso de Pós-graduação em Ciência de Dados e Analytics da PUC-Rio.
+Trabalho de conclusão do módulo de Engenharia de Dados do curso de pós-graduação em Ciência de Dados e Analytics da PUC-Rio.
 
 ![Overview do Projeto](/images/overview-projeto.png)
 
-O produto final deste trabalho é um dashboard, criado usando Metabase. Ele pode ser acessado publicamente [aqui](http://3.137.169.241:3000/public/dashboard/749258f2-67f9-41a4-9e57-f69c0fb5392b).
+> :bar_chart: O produto final deste trabalho é um dashboard, criado usando Metabase. Ele pode ser acessado publicamente [aqui](http://3.137.169.241:3000/public/dashboard/749258f2-67f9-41a4-9e57-f69c0fb5392b).
 
 ## Sumário
 
@@ -30,31 +30,34 @@ O produto final deste trabalho é um dashboard, criado usando Metabase. Ele pode
     - [5.2.4 Taxa de Cobertura](#5-quantos-beneficiários-existem-no-brasil-qual-é-a-taxa-de-cobertura)
     - [5.2.5 Planos Individuais e Coletivos](#6-existem-mais-planos-individuais-ou-coletivos)
   - [5.3 Metabase](#metabase)
-- [6. Autoavaliação](#autoavaliação)
+- [6. Conclusão](#conclusão)
+    - [6.1 Custos](#custos)
+
+OBS: A estrutura de documentação deste projeto foi definida pelos critérios de avaliação do trabalho, portanto, refletem os tópicos de discussão exigidos.
 
 ## Objetivo
 
 A proposta do trabalho consiste em construir uma pipeline de dados completa, que deve incluir ingestão/coleta, modelagem, transformação e carga, utilizando algum ambiente de computação em nuvem, como Databricks, AWS, GCP e Azure. Além disso, ao final, é necessário analisar os dados, a fim de responder perguntas previamente definidas.
 
-Meu objetivo é trabalhar com os dados da **Agência Nacional de Saúde Suplementar (ANS)** na plataforma do Databricks. A agência disponibiliza grandes volumes de dados sobre operadoras de planos de saúde e beneficiários, em formato aberto. Alguns conjuntos de dados ultrapassam 10GB, o que representa um desafio interessante para colocar em prática os conhecimentos adquiridos sobre processamento distribuído, modelagem de data lakehouses, e arquitetura Apache Spark. 
+O objetivo deste projeto é trabalhar com os dados da **Agência Nacional de Saúde Suplementar (ANS)** na plataforma do Databricks. A agência disponibiliza grandes volumes de dados sobre operadoras de planos de saúde e beneficiários, em formato aberto. Alguns conjuntos de dados ultrapassam 10 GB, o que representa um desafio interessante para colocar em prática os conhecimentos adquiridos sobre processamento distribuído, modelagem de daods em data lakehouses, e arquitetura Apache Spark.
 
 ### Plataforma
 
- Em relação à plataforma utilizada, optei pelo uso do Databricks na versão Premium, utilizando os 14 dias de free-trial, que se encerram hoje (12/07/2024). Além do Databricks, escolhi a AWS como workspace do Databricks, por já ter alguma familiaridade com a plataforma.
+Em relação à plataforma utilizada, optei pelo uso do Databricks, na versão Premium. Além disso, optei pela AWS como ambiente para o workspace do Databricks, por já ter familiaridade com a plataforma.
 
-A opção por não utilizar o Databricks Community foi visando ter mais contato com um ambiente "real", mais próximo do utilizado em empresas, e para ter acesso a algumas funcionalidades fundamentais, como a ferramenta de orquestração de pipelines (Databricks Workflows), conexão com repositório no GitHub, entre outras.
+A opção por não utilizar o Databricks Community (versão gratuita) foi feita visando ter mais contato com um ambiente "real", mais próximo do utilizado em empresas, e para ter acesso a algumas funcionalidades fundamentais, como a ferramenta de orquestração de pipelines (Databricks Workflows) e a conexão com repositórios no GitHub. Devido ao uso da versão Premium, a execução do trabalho incorreu em alguns custos, que serão apresentados e discutidos adiante.
 
-Também utilizei algumas instâncias EC2, além dos clusters criados pelo Databricks, para parte de analytics do trabalho, que vou apresentar mais para frente.
+Também foram utilizadas instâncias de servidor EC2, além dos clusters criados pelo Databricks, para seção de analytics do trabalho.
 
 ### Perguntas 
 
 As perguntas/problemas que desejo responder através das análises são:
 
-1. Qual é o atual índice de sinistralidade no setor de seguros de saúde? Ele está abaixo ou acima da média histórica?
+1. Qual é o atual **índice de sinistralidade** no setor de seguros de saúde? Ele está abaixo ou acima da média histórica?
 
-2. Qual é a seguradora mais eficiente do ponto de vista de custo por beneficiário?
+2. Qual é a seguradora mais eficiente do ponto de vista de **custo por beneficiário**?
 
-3. Qual é o market share em número de beneficiários no segmento médico-hospitalar?
+3. Qual é o **market share** em número de beneficiários no segmento médico-hospitalar?
 
 4. Quantas empresas de plano de saúde existem no Brasil?
 
@@ -64,17 +67,21 @@ As perguntas/problemas que desejo responder através das análises são:
 
 ## Coleta
 
-A ANS disponibiliza todos os seus dados através de um servidor FTP em sua plataforma de dados abertos, que pode ser acessado através do [link](https://dadosabertos.ans.gov.br/FTP/PDA/).
+A ANS disponibiliza todos os seus dados abertos através de um servidor FTP, que pode ser acessado através do [link](https://dadosabertos.ans.gov.br/FTP/PDA/).
 
-Os dados têm boa qualidade, no geral, e são bem organizados, sendo a grande maioria acompanhada de um arquivo de metadados ou catálogo. Alguns catálogos informam, inclusive, que alguns campos são chaves estrangeiras de tabelas em outros conjuntos de dados, o que é muito útil.
+Os dados têm boa qualidade, no geral, e são bem organizados, sendo a grande maioria acompanhada de um arquivo de metadados ou catálogo. Alguns catálogos informam, inclusive, que algumas colunas são chaves estrangeiras de tabelas em outros conjuntos de dados, o que é muito útil.
 
-Alguns dados utilizados, como apresentado, têm grandes volumes, como o cadastro de beneficiários ativos, divulgado mensalmente, que possui cerca de 10 GB em arquivos .csv, totalizando cerca de 14,5 milhões de registros e 22 atributos.
+Alguns dos dados utilizados, como apresentado, têm grandes volumes, como o cadastro de beneficiários ativos, divulgado mensalmente, que possui cerca de 10 GB em arquivos `.csv`, totalizando cerca de 14,5 milhões de registros e 22 atributos, para cada mês.
 
-Os dados são disponibilizados em arquivos compactados .zip, por isso, o código para coleta de dados envolvia, quase sempre, extrair os arquivos, lê-los em memória, e salvar em um volume no Databricks, que serviu como landing/camada raw.
+Os dados são disponibilizados em arquivos compactados `.zip`, por isso, o código para coleta de dados envolve a extração dos arquivos, leitura em memória, e persistência em um volume no Databricks (ou storage no S3), que serviu como landing/camada raw.
 
-Após salvar os arquivos no storage, o script fazia a leitura usando pyspark, e fazia ingestão na camada bronze, em formato Delta.
+Esse procedimento de persistência dos dados em uma camada `raw`, fora do ambiente do Delta Lake, é uma forma de evitar problemas comuns ao se trabalhar com grandes volumes de dados e clusters Spark, como **spill**.
+
+Após salvar os arquivos no storage, o código faz a leitura usando  `pyspark`, e a ingestão na camada bronze, em formato Delta.
 
 O processo de ingestão dos dados e criação da camada bronze foi feito através de **classes de ingestão**, como:
+
+bronze_beneficiarios.py
 
 ```python
 class Collector:
@@ -152,21 +159,23 @@ class Collector:
 
 ## Modelagem
 
-O modelo escolhido para o trabalho foi o Data Lake, que consiste em salvar os dados estruturados e não-estruturados, sem um schema definido, que serão trabalhados em outras etapas ou consumidos por aplicações.
+Foi escolhido para o trabalho o modelo de **data lake**, que consiste em salvar os dados estruturados e não-estruturados, sem um schema definido, que serão trabalhados em outras etapas ou consumidos por aplicações.
 
-O problema dos data lakes tradicionais é que os dados são salvos da mesma forma que foram capturados, o que significa - geralmente - que esses dados têm baixa qualidade e não passaram por *constraints* e camadas de processamento.
+O "problema" dos data lakes tradicionais é que os dados são salvos da mesma forma que foram capturados, o que significa - geralmente - que esses dados têm baixa qualidade e não passaram por *constraints* e camadas de processamento.
 
 ### Delta Lakehouse
 
-Uma solução para esse problema, muito utilizada na plataforma do Databricks pela fácil integração, é o framework open-source **Delta Lake** e a arquitura de Data Lakehouses.
+Uma solução para esse problema, muito adotada por profissionais que utilizam a plataforma do Databricks pela fácil integração, é o framework open-source **Delta Lake** e a arquitura de data lakehouses.
 
 Esse framework consiste em uma camada de abstração construída em cima do seu data lake tradicional (Amazon S3, por exemplo), que incentiva a criação de fluxos de dados em camadas, em que cada camada o dado é tratado e é trabalhado em níveis incrementais de qualidade.
 
 Essas camadas são:
 
 - **Bronze:** tabelas em formato bruto, com máximo de fidelidade ao dado original coletado;
-- **Silver:** tabelas com estrutura e schema definidos, realizada limpeza e enriquecimento nos dados;
+- **Silver:** tabelas com estrutura e schema definidos, realizada limpeza e enriquecimento dos dados;
 - **Gold:** tabelas agregadas com métrias de interesse de acordo com a regra de negócio.
+
+<br>
 
 ![Delta Lake](/images/delta-lake.png)
 
@@ -174,15 +183,15 @@ Essas camadas são:
 
 A pipeline do trabalho utiliza o framework Delta e as tabelas são processadas em camadas bronze, silver e gold. 
 
-Ao salvar as tabelas em formato `delta` e utilizando o Unity Catalog, é possível usufruir de funcionalidades integradas do **metastore** do Databricks, como controle de acesso, métrica de uso, visualização de schema e linhagem dos dados.
+Ao salvar as tabelas em formato `delta` e utilizando o Unity Catalog, é possível usufruir de funcionalidades integradas do **metastore** do Databricks, como controle de acesso, métricas de uso, visualização de schema e linhagem dos dados.
 
-Para ilustrar essa funcionalidade, podemos observar o diagrama de linhagem da tabela `gold.ans.custo_beneficiario`, que utiliza 3 (três) tabelas bronze como fonte primária.
+Para ilustrar essa funcionalidade, podemos observar o diagrama de linhagem da tabela `gold.ans.custo_beneficiario`, que utiliza 4 (quatro) tabelas como origem.
 
 ![Linhagem do Custo por Beneficiário](/images/custo-beneficiario-lineage.png)
 
-Podemos observar o *schema* das tables e como na camada bronze (à esquerda da imagem) essas tabelas possuem maior dimensionalidade, além de dados em tipos inapropriados, nomes de colunas de diferentes formatos, entre outras características de dados em menor qualidade.
+Podemos observar que no *schema* das tables da camada bronze (à esquerda da imagem) há maior dimensionalidade, além de dados com tipos inapropriados, nomes de colunas de diferentes formatos, entre outras características de dados em menor qualidade.
 
-Um exemplo é a coluna "CNPJ" da tabela `bronze.ans.operadoras`, que ao ser lida pelo Spark, foi inferida com tipo `bigint`, enquanto o correto seria `string`. Essa transformação é feita na camada silver e na tabela `silver.ans.operadoras` já podemos ver a mudança feita. 
+Um exemplo é na coluna "CNPJ" da tabela `bronze.ans.operadoras`, que ao ler os dados usando Spark, foi inferido um tipo `bigint`, enquanto o correto seria `string`. Essa transformação é feita na camada silver e na tabela `silver.ans.operadoras` já podemos ver a mudança feita. 
 
 O código utilizado para transformação desses dados na camada silver pode ser encontrado em [/src/silver/silver_operadoras.py](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/src/silver/silver_operadoras.py).
 
@@ -224,15 +233,15 @@ Destaque para o código que transforma os dados da coluna "CNPJ" em `string`.
 .withColumn('CNPJ', df['CNPJ'].cast('string'))
 ```
 
-Além dessa transformação, na camada `silver`, é feito um tratamento da "RAZAO_SOCIAL", removendo termos comuns (LTDA, SA, EIRELI). Quando "NOME_FANTASIA" é `NULL`, o código substitui pela razão social.
+Além dessa transformação, na camada `silver`, é feito um tratamento da "RAZAO_SOCIAL", removendo termos comuns (LTDA, SA, EIRELI, etc). Quando "NOME_FANTASIA" é `NULL`, o código substitui o campo nulo pelo valor da "RAZAO_SOCIAL".
 
 ### Exemplo: Custo por Beneficiário
 
-Dessa forma, conforme as tabelas avançam no fluxo, é definido um schema, até chegar na tabela *gold* que será consumida no ambiente de *analytics*.
+Dessa forma, conforme as tabelas avançam no fluxo, é definido um schema, até chegar na tabela *gold* que será consumida pelo ambiente de *analytics*, para geração de insights e produtos de dados, como dashboards.
 
 A tabela `gold.ans.custo_beneficiario`, que calcula um indicador setorial relacionado à eficiência da operadora, é um bom exemplo, pois utiliza todas as 3 (três) fontes primárias para ser construída.
 
-Nessa camada, na maioria dos casos, utilizei a linguagem SQL para criar as tabelas:
+Na camada `gold`, na maioria dos casos, utilizei a linguagem SQL para criar as tabelas:
 
 [custo_beneficiario.sql](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/src/gold/custo_beneficiario.sql)
 
@@ -273,17 +282,17 @@ Ao final do fluxo de transformações, a tabela na camada `gold` possui apenas 3
 | NOME_FANTASIA | string | Nome fantasia da operadora |
 | CUSTO_BENEFICIARIO | double | Custo por beneficiário em reais (R$) por trimestre |
 
-Essa tabela final está pronta para ser consumida por dashboards ou por *stakeholders* dentro da organização, sendo possível rankear as empresas da mais eficiene para menos eficientes, assim como fazer *joins* com outras tabelas, como `gold.ans.market_share`, e comparar a eficiência entre as líderes do mercado.
+Essa tabela final está pronta para ser consumida por dashboards ou por *stakeholders* dentro da organização, sendo possível rankear as empresas da mais eficiente para a menos eficiente, assim como fazer *joins* com outras tabelas, como `gold.ans.market_share`, e comparar a eficiência entre as líderes do mercado.
  
 ## Carga
 
-Todas as etapas da pipelines de ETL (extração, transformação e carga) foram feitas de forma automatizada e utilizando Python (pyspark) e SQL. 
+Todas as etapas da pipeline de ETL (extração, transformação e carga) foram feitas de forma automatizada e utilizando Python (pyspark) e SQL. 
 
-Se considerarmos a etapa de ingestão da camada `raw`, o processo se assemelha a um ELT (extração, carga e transformção), de modo que os dados são coletados e carregados como arquivos no formato original (.csv) em uma camada *landing* e só depois são transformados em tabelas `delta`.
+Se considerarmos a etapa de ingestão na camada `raw`, o processo segue a lógica de ELT (extração, carga e transformção), de modo que os dados são coletados e carregados como arquivos no formato original (.csv), em uma *landing zone*, e só depois são transformados em tabelas `delta`.
 
-A escolha por adotar uma pipeline de ELT, em alguns momentos, se deu em razão do grande volume dos conjuntos de dados de `demostracoes_contabeis` e `beneficiarios`, e pela eficiência gerada por essa abordagem: operações mais rápidas e sobrecarga reduzida nos clusters.
+A escolha por adotar esse processo foi devido ao grande volume dos conjuntos de dados de `demonstrações_contábeis` e `beneficiários`, além da eficiência gerada por essa abordagem, resultando em operações mais rápidas e sobrecarga reduzida nos clusters.
 
-Todos os arquivos utilizado para a pipeline de ETL (ou ELT), separados em camadas bronze, silver e gold, podem ser consultado neste repositório na pasta `/src`.
+Todos os arquivos utilizados para construção da pipeline de ETL (ou ELT), separados em camadas bronze, silver e gold, podem ser consultados neste repositório na pasta `/src`.
 
 Aqui estão os links para os arquivos:
 
@@ -309,17 +318,17 @@ Aqui estão os links para os arquivos:
 
 ### Export para AWS
 
-Além dos códigos utilizados para pipeline dos dados da ANS, no diretório `/src`, também pode ser encontrado o arquivo `export.py`.
+Além dos códigos utilizados para pipeline dos dados da ANS, no diretório `/src` também pode ser encontrado o arquivo `export.py`.
 
-Por ter usado o Databricks Premium, após o período de teste de 14 dias utilizado para realização do trabalho, não farei mais uso do workspace e ambiente de Delta Lake construído, visando a incidência de custos adicionais.
+Por ter usado o Databricks Premium, após o período de teste de 14 dias, não farei mais uso do workspace e ambiente de Delta Lake construído, em razão da incidência de custos adicionais.
 
-Para manter os dados produzidos, mesmo após encerrar o workspace no ambiente do Databricks, criei um *shared volume* - que liga o Databricks a um storage externo ao ambiente, no meu caso o S3 - e um script Python que carrega todas as tabelas na camada `gold` nesse volume em formato `parquet`.
+Para manter os dados gerados, mesmo após encerrar o workspace no ambiente do Databricks, criei um *shared volume* - que liga o Databricks a um storage externo no ambiente da AWS, no meu caso o S3 - e um código em Python que carrega todas as tabelas da camada `gold` nesse volume em formato `parquet`.
 
-Dessa forma, eu tenho acesso ao dados do Databricks no meu ambiente da AWS, mesmo após encerrar meu período de utlização do Databricks.
+Dessa forma, eu garanto o acesso ao dados do Databricks no meu ambiente da AWS, mesmo após encerrar meu período de utlização da plataforma.
 
 O código utilizado para realizar essa etapa final foi:
 
-[export.py]()
+export.py
 
 ```python
 bucket = 'databricks-gold-ans'
@@ -362,40 +371,40 @@ for table in tables.collect():
 
 Todos os processos descritos acima, incluindo a coleta dos dados, transformações, carga e exportação dos dados finais para AWS, foram automatizados utilizando a funcionalidade do Databricks Workflows. 
 
-O Databricks Workflows é um serviço integrado na plataforma para fazer a **orquestração de pipelines**, de forma similar a outros serviços no mercado com Airflow, Dagster, Prefect, etc.
+O Databricks Workflows é um serviço integrado na plataforma para fazer a **orquestração de pipelines**, de forma similar a outras soluções no mercado, como Airflow, Dagster, Prefect, etc.
 
 Assim como os demais, é possível agendar execuções, *triggers*, monitorar falhas e logs, e definir de forma visual a ordem de execução das tarefas.
 
-A grande vantagem do Databricks Workflows, frente aos outros serviços, é a integração com a plataforma. As tarefas de um workflow pode usar clusters dedicados, que são ligado e depois terminados apenas para execução da pipeline, e podem ser definidas a partir dos próprios Notebooks do Databricks.
+A grande vantagem do Databricks Workflows, frente aos outros serviços, é a integração com a plataforma. As tarefas de um workflow podem utilizar clusters dedicados - chamados de *job clusters*, que são ligado e depois terminados apenas para execução da pipeline - e podem ser definidas a partir dos próprios Notebooks do Databricks.
 
-Dessa forma, é possível na mesma pipeline utilizar diversas liguagens, como Python, SQL, Scala e R.
+Dessa forma, é possível utilizar diversas liguagens, como Python, SQL, Scala e R, na mesma pipeline.
 
-Ao final da configuração de um workflow, é possível gerar um arquivo `json`, que salvei em [workflows/pipeline.json](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/workflows/pipeline.json), e permite versionar os *jobs*. Além de produzir uma visualização da sua pipeline:
+Ao final da configuração de um workflow, é também possível gerar um arquivo `.json`, que foi salvo em [workflows/pipeline.json](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/workflows/pipeline.json), e permite versionar os *jobs*, além de definir programaticamente uma visualização da sua pipeline:
 
 ![Databricks Workflows](/images/workflow-tasks.png)
 ![Databricks Workflows 2](/images/workflow-run.png)
 
-Podemos ver na imagem que a pipeline teve duração total de 18 minutos e 27 segundos, e todas as tarefas foram concluídas com sucesso. No contexto de *big data* e janelas de produção `batch` não é um tempo muito grande, embora exista margem para tornar o código mais eficiente ou utilizar clusters mais potentes, o que aceleraria a execução da pipeline.
+Podemos observar que a pipeline teve duração total de 18 minutos e 27 segundos, e todas as tarefas foram concluídas com sucesso. No contexto de *big data* e janelas de produção *batch* não é um tempo muito grande, embora exista margem para tornar o código mais eficiente ou utilizar clusters mais potentes, o que aceleraria a execução da pipeline.
 
 ## Análise
 
-A etapa de análise foi desenvolvida utilizando SQL em um ambiente de analytics criados fora no Databricks, na AWS, utilizando o Metabase. As tabelas da camada `gold` foi carregadas em uma bancos de dados PostgreSQL, sendo possível realizar consultar, responder as perguntas e gerar visualizações.
+A etapa de análise foi desenvolvida utilizando SQL em um ambiente de analytics criados fora no Databricks, na AWS, utilizando o Metabase, hospedado usando Docker. As tabelas da camada `gold` foram carregadas em um bancos de dados PostgreSQL, sendo possível realizar consultas, responder as perguntas definidas no início do trabalho e gerar visualizações.
 
 ### Qualidade
 
 Se tratando de dados disponibilizados por uma agência reguladora, como é o caso da Agência Nacional de Saúde Suplementar (ANS), não tive grandes problemas em relação a qualidade dos dados.
 
-Além do mais, a ANS possui um [Plano de Dados Abertos - PDA 2024-2026](https://www.gov.br/ans/pt-br/acesso-a-informacao/perfil-do-setor/dados-abertos-1#:~:text=Plano%20de%20Dados%20Abertos%20%2D%20PDA,Federal%20no%20%C3%A2mbito%20da%20ANS.), que visa implementar  "ações de planejamento, promoção, execução e melhoria de ações estratégicas e operacionais relacionadas à Política de Dados Abertos", o que mostra uma preocupação com a qualidade da informação divulgada.
+Além do mais, a ANS possui um [Plano de Dados Abertos - PDA 2024-2026](https://www.gov.br/ans/pt-br/acesso-a-informacao/perfil-do-setor/dados-abertos-1#:~:text=Plano%20de%20Dados%20Abertos%20%2D%20PDA,Federal%20no%20%C3%A2mbito%20da%20ANS.), que visa implementar "ações de planejamento, promoção, execução e melhoria de ações estratégicas e operacionais relacionadas à Política de Dados Abertos", o que mostra uma preocupação com a qualidade da informação divulgada.
 
-É possível encontrar todos os conjuntos de dados em um só lugar de maneira organizada e documentos. Os arquivos seguem padrões de nomenclatura, portanto, é fácil iterar por eles e encontrar de forma programática os dados que precisam ser coletados.
+É possível encontrar todos os conjuntos de dados em um só lugar de maneira organizada e documentada. Os arquivos seguem padrões de nomenclatura, portanto, é fácil iterar por eles e encontrar de forma programática os dados que precisam ser coletados.
 
-Como comentado no início do trabalho, a agência divulga catálogos e metadados sobre seus conjuntos, até mesmo informando sobre relacionamentos entre tabelas, que são bem normalizadas.
+Conforme comentado no início do trabalho, a agência divulga catálogos e metadados sobre seus conjuntos, até mesmo informando sobre relacionamentos entre tabelas, que são bem normalizadas.
 
 Portanto, não encontrei desafios frente a qualidade dos dados. As transformações que precisei fazer se concentraram em adequar o schema para o caso de uso e o tratamento de alguns poucos dados nulos.
 
 ### Perguntas
 
-As perguntas poderiam ter sido respondidas no ambiente do Databricks, no entanto, escolhi criar um ambiente separado de Analytics usando o [Metabase](https://www.metabase.com/), um serviço open-source de BI e dashboards.
+As perguntas poderiam ter sido respondidas no ambiente do Databricks, no entanto, escolhi criar um ambiente separado de analytics usando o [Metabase](https://www.metabase.com/), um serviço open-source de BI e dashboards.
 
 No Metabase é possível definir "Questions", que podem ser consultas SQL. Após criar as *questions*, organizadas em coleções lógicas específicas, elas podem ser usadas para criar dashboards.
 
@@ -497,30 +506,30 @@ GROUP BY "TIPO_CONTRATACAO_PLANO", total_beneficiarios."TOTAL";
 
 ### Metabase
 
-Além do ambiente do Databricks, também utilizei um ambiente de analytics criado usando Docker, PostgreSQL e Metabase, rodando em uma instância EC2 na AWS.
+Além do ambiente do Databricks, também utilizei um ambiente de analytics criado usando Docker, PostgreSQL e Metabase, em uma instância EC2 na AWS.
 
-Além das tecnologias mencionadas, também escrevi um script em Python ([app/main.py](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/app/main.py)) responsável por fazer a carga *full-load* dos arquivos `parquet` salvos no S3 diretamente nas tabelas do banco de dados PostgreSQL.
+Além das tecnologias mencionadas, também foi escrito um código em Python ([app/main.py](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/app/main.py)) responsável por fazer a carga *full-load* dos arquivos `parquet` salvos no S3 diretamente nas tabelas do banco de dados PostgreSQL.
 
 Mais informações podem ser encontradar no arquivo [app/README.md](https://github.com/ianaraujo/puc-engenharia-dados/blob/master/app/README.md) dedicado exclusivamente para explicar a configuração desse ambiente.
 
 Além de utilizar o Metabase como ambiente para realizar as consultas e produzir as visualizações, também criei um **dashboard** público, que pode ser acessado livremente através do link:
 
-http://3.137.169.241:3000/public/dashboard/749258f2-67f9-41a4-9e57-f69c0fb5392b
+> http://3.137.169.241:3000/public/dashboard/749258f2-67f9-41a4-9e57-f69c0fb5392b
 
 ![Dashboard](/images/dashboard.png)
 
-## Autoavaliação
+## Conclusão
 
-Acredito ter conseguido atingir os objetivos propostos para o trabalho. Sobretudo, considero a escolha pelo Databricks Premium muito acertada, principalmente pelo aprendizado e o contato com as funcionalidades da plataforma, mas também por permitir trabalhar em soluções mais avançadas e mais próximas do dia-a-dia das organizações.
+Em forma de avaliação final do trabalho, acredito ter conseguido atingir todos os objetivos propostos. Sobretudo, considero a escolha do Databricks, como plataforma, muito acertada, frente as demais opções. Apesar dos custos adicionais, o Databricks oferece muitas ferramentas para profissionais que trabalham com dados, engenheiros, cientistas e analistas de dados, que justificam os custos em razão do ganho de produtividade. 
 
-Desde o início, planejei utilizar os 14 dias do free-trial integralmente e defini um *budget* de cerca de R$ 150,00 para realização do trabalho. Esse objetivo foi atingido.
+Outro ponto fundamental foi aprendizado e o contato com as funcionalidades da plataforma, que cada vez mais é adotada por empresas no mercado, mas também por permitir trabalhar em soluções mais avançadas e mais próximas do dia-a-dia das organizações.
 
-No Databricks, configurei um cluster de 4 cores e 16 GB de memória, que utilizei durante esse período e que se provou suficiente para as tarefas executadas. Principalmente, considerando um bom equilíbrio entre custo e performance.
+### Custos
 
-No total, desde o dia 27 de junho, tive custo total com o trabalho de $20.63, representado por dois serviços principais. As barras em azul representam um custo fixo do workspace do Databricks, que é o NAT Gateway utilizado pelo ambiente para configuração de rede dos clusters. Já as barras na cor vermelha são, de fato, os cluster criados para execução dos *workloads* do trabalho.
+Desde o início do trabalho, planejei utilizar os 14 dias do free-trial do Databricks Premium integralmente e configurei um *budget* de cerca de R$ 150,00 para realização do trabalho, conforme os custos da AWS. Esse objetivo também foi atingido.
+
+No Databricks, utilizei um cluster de 4 cores e 16 GB de memória, durante todo o período, que se provou suficiente para as tarefas executadas. Principalmente, considerando um bom equilíbrio entre custo e performance.
+
+No total, desde o dia 27 de junho, tive custo total com o trabalho de $20.63, representado por dois serviços principais na AWS. As barras em azul representam um custo fixo essencial para o funcionamento do workspace do Databricks, que é o NAT Gateway, que atua na configuração de rede dos clusters. Já as barras na cor vermelha são, de fato, os cluster criados para execução dos *workloads* do trabalho.
 
 ![Custos](/images/aws-costs.png)
-
-Agradeço aos professores por todo apoio e pelos ensinamentos.
-
-Ian Vaz Araujo
